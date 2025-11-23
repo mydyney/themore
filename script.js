@@ -54,31 +54,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchExchangeRate() {
         refreshRateBtn.classList.add('rotating');
-        rateSourceText.textContent = "Fetching rate from server...";
+        rateSourceText.textContent = "Fetching rate...";
         exchangeRateInput.placeholder = "Loading...";
-
+        
         try {
-            // Fetch from local server API
-            const response = await fetch('/api/rate');
-            const data = await response.json();
+            let rate100;
+            let sourceText;
 
-            if (data && data.rate) {
-                const rate100 = data.rate; // Scraped rate is already for 100 JPY usually, or we need to check.
-                // Shinhan "Send" rate is usually per 100 JPY for JPY.
-                // Let's assume the scraper returns the value as seen on screen (e.g. 950.13).
+            try {
+                // 1. Try fetching from local server (for Scraper/Server mode)
+                const response = await fetch('/api/rate');
+                if (!response.ok) throw new Error("Server offline");
+                const data = await response.json();
+                
+                if (data && data.rate) {
+                    rate100 = data.rate;
+                    const timeStr = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : 'Unknown';
+                    sourceText = `Rate from <strong>Shinhan Bank</strong> (Server at ${timeStr})`;
+                } else {
+                    throw new Error("No data from server");
+                }
+            } catch (serverError) {
+                // 2. Fallback: Fetch directly from Open API (for GitHub Pages / Static mode)
+                console.log("Server fetch failed, switching to direct API:", serverError.message);
+                const response = await fetch('https://open.er-api.com/v6/latest/USD');
+                const data = await response.json();
 
-                exchangeRateInput.value = rate100.toFixed(2);
-
-                const timeStr = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : 'Unknown';
-                rateSourceText.innerHTML = `Rate from <strong>Shinhan Bank</strong> (Scraped at ${timeStr})`;
-
-                updateTargetDisplay();
-            } else {
-                throw new Error("No rate data available yet");
+                if (data && data.rates && data.rates.JPY && data.rates.KRW) {
+                    rate100 = (data.rates.KRW / data.rates.JPY) * 100;
+                    sourceText = `Rate from <a href="https://open.er-api.com/v6/latest/USD" target="_blank">open.er-api.com</a>`;
+                } else {
+                    throw new Error("Invalid data format from Open API");
+                }
             }
+
+            // Update UI with the obtained rate
+            if (rate100) {
+                exchangeRateInput.value = rate100.toFixed(2);
+                rateSourceText.innerHTML = sourceText;
+                updateTargetDisplay();
+            }
+
         } catch (error) {
             console.error("Failed to fetch rate:", error);
-            rateSourceText.textContent = "Failed to fetch. Ensure server is running (npm start).";
+            rateSourceText.textContent = "Failed to fetch. Please enter manually.";
             exchangeRateInput.placeholder = "e.g. 950.13";
         } finally {
             refreshRateBtn.classList.remove('rotating');
