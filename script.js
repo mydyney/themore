@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshRateBtn.classList.add('rotating');
         rateSourceText.textContent = "Fetching rate...";
         exchangeRateInput.placeholder = "Loading...";
-        
+
         try {
             let rate100;
             let sourceText;
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/api/rate');
                 if (!response.ok) throw new Error("Server offline");
                 const data = await response.json();
-                
+
                 if (data && data.rate) {
                     rate100 = data.rate;
                     const timeStr = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : 'Unknown';
@@ -75,22 +75,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error("No data from server");
                 }
             } catch (serverError) {
-                // 2. Fallback: Fetch directly from Open API (for GitHub Pages / Static mode)
-                console.log("Server fetch failed, switching to direct API:", serverError.message);
-                const response = await fetch('https://open.er-api.com/v6/latest/USD');
-                const data = await response.json();
+                // 2. Fallback: Show link to Shinhan Bank (for GitHub Pages / Static mode)
+                console.log("Server fetch failed:", serverError.message);
 
-                if (data && data.rates && data.rates.JPY && data.rates.KRW) {
-                    rate100 = (data.rates.KRW / data.rates.JPY) * 100;
-                    sourceText = `Rate from <a href="https://open.er-api.com/v6/latest/USD" target="_blank">open.er-api.com</a>`;
-                } else {
-                    throw new Error("Invalid data format from Open API");
-                }
+                // Shinhan Bank URL
+                const shinhanUrl = "https://bank.shinhan.com/index.jsp#020501010200";
+
+                sourceText = `Server offline. <a href="${shinhanUrl}" target="_blank">Click to check Shinhan Bank</a> (Select 'Japan 100 Yen')`;
+                exchangeRateInput.placeholder = "Enter manually";
+                exchangeRateInput.value = ""; // Clear value to encourage manual input
             }
 
-            // Update UI with the obtained rate
+            // Update UI
             if (rate100) {
                 exchangeRateInput.value = rate100.toFixed(2);
+                rateSourceText.innerHTML = sourceText;
+                updateTargetDisplay();
+            } else if (sourceText) {
                 rateSourceText.innerHTML = sourceText;
                 updateTargetDisplay();
             }
