@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The More Calculator - JPY Optimization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>The More Calculator</h1>
+            <p class="subtitle">Optimize your JPY spending for maximum benefits</p>
+        </header>
+
+        <main>
+            <section class="card exchange-section">
+                <h2>Exchange Rate</h2>
+                <div class="input-group">
+                    <label for="exchange-rate">Send Rate (KRW per 100 JPY)</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="exchange-rate" step="0.01" placeholder="Loading...">
+                        <span class="unit">KRW</span>
+                        <button id="refresh-rate-btn" class="icon-btn" title="Refresh Rate">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M1 20v-6h6"></path>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="help-text" id="rate-source-text">Connecting to local server...</p>
+                    <div class="target-display" id="target-jpy-display">
+                        <span class="label">Target (5,999 KRW):</span>
+                        <span class="value">-- JPY</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card product-section">
+                <div class="section-header">
+                    <h2>Products</h2>
+                    <button id="add-product-btn" class="btn secondary">+ Add Product</button>
+                </div>
+                <div id="product-list">
+                    <!-- Product items will be added here dynamically -->
+                </div>
+            </section>
+
+            <div class="action-area">
+                <button id="calculate-btn" class="btn primary">Calculate Best Combination</button>
+            </div>
+
+            <section id="results-section" class="card results-section hidden">
+                <h2>Optimization Result</h2>
+                <div class="result-summary">
+                    <div class="result-item">
+                        <span class="label">Total Amount (KRW)</span>
+                        <span class="value" id="result-total">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Target Range</span>
+                        <span class="value" id="result-range">-</span>
+                    </div>
+                </div>
+                <div class="result-details">
+                    <h3>Selected Products</h3>
+                    <ul id="result-items-list">
+                        <!-- Result items -->
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
