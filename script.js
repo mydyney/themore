@@ -38,7 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function updateTargetDisplay() {
-        const rate100 = parseFloat(exchangeRateInput.value);
+        const rawRate = parseFloat(exchangeRateInput.value);
+        const rate100 = rawRate * 1.008; // Apply 1.008 multiplier
         const valueSpan = targetJpyDisplay.querySelector('.value');
 
         if (!isNaN(rate100) && rate100 > 0) {
@@ -79,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Server fetch failed:", serverError.message);
 
                 // Shinhan Bank URL
-                const shinhanUrl = "https://bank.shinhan.com/index.jsp#020501010200";
+                const shinhanUrl = "https://bank.shinhan.com/index.jsp#020501010100";
 
                 sourceText = `Server offline. <a href="${shinhanUrl}" target="_blank">Click to check Shinhan Bank</a> (Select 'Japan 100 Yen')`;
                 exchangeRateInput.placeholder = "Enter manually";
@@ -154,7 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function calculateBestCombination() {
-        const rate100 = parseFloat(exchangeRateInput.value);
+        const rawRate = parseFloat(exchangeRateInput.value);
+        const rate100 = rawRate * 1.008; // Apply 1.008 multiplier
         if (isNaN(rate100)) {
             alert("Please enter a valid exchange rate.");
             return;
