@@ -48,6 +48,7 @@ h1 {
     font-weight: 700;
     background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 8px;
 }
@@ -348,4 +349,122 @@ input[type="text"]:focus {
     font-size: 0.85rem;
     color: var(--text-muted);
     margin-left: 8px;
+}
+
+/* Discount Select */
+.discount-select {
+    padding: 12px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    min-width: 70px;
+}
+
+.discount-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Mobile Layout */
+@media (max-width: 600px) {
+    .container {
+        padding: 0;
+    }
+
+    .card {
+        padding: 16px;
+        border-radius: 0;
+        margin-bottom: 10px;
+    }
+
+    .product-row {
+        flex-wrap: wrap;
+        gap: 8px;
+        background: #f9fafb;
+        padding: 10px;
+        border-radius: 8px;
+    }
+
+    /* 
+       User Request: "Product column too small... Adjust Price and 4:6 ratio"
+       Interpreting as Product (6) : Price (4) to give Product more space.
+       Also handling the new Discount field.
+    */
+    .product-row input[type="text"] {
+        flex: 1 1 100%;
+        /* Full width for name on very small screens or top row */
+        margin-bottom: 4px;
+    }
+
+    .input-wrapper {
+        flex: 6;
+        /* Price gets 6 parts */
+    }
+
+    .discount-select {
+        flex: 4;
+        /* Discount gets 4 parts? Or maybe Price vs Discount? */
+    }
+
+    /* 
+       Re-reading: "Product column too small... Adjust Price and 4:6 ratio"
+       Maybe they want Product and Price on one line with 4:6 ratio?
+       Let's try to keep them on one line if possible, but with discount it's hard.
+       
+       Let's try:
+       Row 1: Product Name (100%)
+       Row 2: Price (60%) + Discount (40%) ? 
+       
+       Or:
+       Product (40%) : Price (60%) ?
+       
+       Let's try to follow the "4:6" strictly for Product vs Price if they are on the same line.
+       But with Discount, we have 3 elements.
+       
+       Let's assume the user meant Product vs Price ratio.
+       Let's set:
+       Product: flex 4
+       Price: flex 6
+       
+       But wait, if Product is "too small", making it 4 (40%) vs Price 6 (60%) makes it smaller than 2:1 (66%).
+       
+       Maybe the user meant "Product 6 : Price 4".
+       
+       Let's try a specific mobile layout:
+       Product Name: flex 6
+       Price Wrapper: flex 4
+       Discount: Auto/Fixed
+    */
+
+    .product-row {
+        display: flex;
+        align-items: center;
+    }
+
+    .product-row input[type="text"] {
+        flex: 4;
+        /* Ratio 4 */
+        min-width: 0;
+        /* Allow shrinking */
+    }
+
+    .input-wrapper {
+        flex: 6;
+        /* Ratio 6 */
+        min-width: 0;
+    }
+
+    .discount-select {
+        flex: 0 0 auto;
+        width: 70px;
+        /* Fixed width for discount */
+        margin-left: 4px;
+    }
+
+    .remove-btn {
+        padding: 4px;
+    }
 }

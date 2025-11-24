@@ -115,6 +115,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="number" placeholder="Price" class="product-price">
                 <span class="unit">JPY</span>
             </div>
+            <select class="discount-select" title="Discount">
+                <option value="0">0%</option>
+                <option value="10">10%</option>
+                <option value="20">20%</option>
+                <option value="30">30%</option>
+                <option value="40">40%</option>
+                <option value="50">50%</option>
+            </select>
             <button class="remove-btn" title="Remove">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
             </button>
@@ -136,8 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
         rows.forEach(row => {
             const name = row.querySelector('.product-name').value;
             const priceJPY = parseFloat(row.querySelector('.product-price').value);
+            const discount = parseInt(row.querySelector('.discount-select').value, 10);
+
             if (name && !isNaN(priceJPY)) {
-                products.push({ name, priceJPY });
+                products.push({ name, priceJPY, discount });
             }
         });
         return products;
@@ -156,51 +166,49 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Convert JPY to KRW
-        const items = products.map(p => ({
-            ...p,
-            priceKRW: Math.floor(p.priceJPY * (rate100 / 100))
-        }));
+        // Convert JPY to KRW with Discount Logic
+        // Logic: Pre-tax -> Discount -> Tax -> KRW
+        const items = products.map(p => {
+            // 1. Convert to pre-tax (8% tax included in price)
+            // Using Math.floor to be conservative/standard for base price extraction
+            const basePrice = Math.floor(p.priceJPY / 1.08);
 
-        // Find best subset based on Accumulation Rate
-        // Rule: Rate = ((Sum % 1000) * 2) / Sum
-        // Condition: Sum >= 5000
+            // 2. Apply Discount
+            const discountedBase = Math.floor(basePrice * (1 - p.discount / 100));
 
-        const result = findBestSubsetByRate(items);
-        displayResults(result);
+            // 3. Re-apply Tax (8%)
+            const finalPriceJPY = Math.floor(discountedBase * 1.08);
+
+            // 4. Convert to KRW
+            const priceKRW = Math.floor(finalPriceJPY * (rate100 / 100));
+
+            return {
+                ...p,
+                finalPriceJPY,
+                priceKRW
+            };
+        });
+
+        // Find Top 2 Subsets
+        const results = findTopSubsets(items);
+        displayResults(results);
     }
 
-    function findBestSubsetByRate(items) {
-        let bestRate = -1;
-        let bestSubset = null;
-        let bestSum = 0;
+    function findTopSubsets(items) {
+        const validSubsets = [];
 
         // Backtracking to find all valid subsets
         function backtrack(index, currentSum, currentItems) {
-            // Optimization: If currentSum is very large, rate might decrease, but we can't easily prune 
-            // because a small addition could boost the (Sum % 1000) part significantly.
-            // However, practical limits apply. Let's just explore all since N is small.
-
             if (index === items.length) {
                 if (currentSum >= 5000) {
                     const points = (currentSum % 1000) * 2;
                     const rate = points / currentSum;
-
-                    if (rate > bestRate) {
-                        bestRate = rate;
-                        bestSubset = [...currentItems];
-                        bestSum = currentSum;
-                    } else if (rate === bestRate) {
-                        // Tie-breaker: Prefer higher sum? or lower sum? 
-                        // Usually lower sum is better for "spending less for same rate", 
-                        // but higher sum gives more absolute points.
-                        // Let's stick to the first found or maybe higher points (which implies higher sum usually if rate is same).
-                        // Let's prefer higher absolute points (which means higher (Sum%1000)).
-                        if ((currentSum % 1000) > (bestSum % 1000)) {
-                            bestSubset = [...currentItems];
-                            bestSum = currentSum;
-                        }
-                    }
+                    validSubsets.push({
+                        sum: currentSum,
+                        items: [...currentItems],
+                        rate: rate,
+                        points: points
+                    });
                 }
                 return;
             }
@@ -214,48 +222,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
         backtrack(0, 0, []);
 
-        if (bestSubset) {
-            return { sum: bestSum, items: bestSubset, rate: bestRate };
-        }
-        return null;
+        // Sort by Rate (desc), then Points (desc), then Sum (desc)
+        validSubsets.sort((a, b) => {
+            if (b.rate !== a.rate) return b.rate - a.rate;
+            if (b.points !== a.points) return b.points - a.points;
+            return b.sum - a.sum;
+        });
+
+        // Return top 2 unique subsets (by content)
+        // Simple deduplication strategy: check if item names are identical? 
+        // Or just return top 2. If they are same items, it's same subset.
+        // Since we iterate all subsets, we might have duplicates if we had identical items? 
+        // No, items are distinct by index in backtracking.
+
+        return validSubsets.slice(0, 2);
     }
 
-    function displayResults(result) {
+    function displayResults(results) {
         resultsSection.classList.remove('hidden');
-        resultItemsList.innerHTML = '';
 
-        if (result) {
-            const points = (result.sum % 1000) * 2;
-            const ratePercentage = (result.rate * 100).toFixed(2);
+        // Clear previous results
+        // We need to restructure the HTML to support multiple results if not already
+        // The current HTML has a single "result-summary" and "result-details".
+        // We will dynamically create result blocks.
 
-            resultTotal.textContent = `${result.sum.toLocaleString()} KRW`;
-            // We'll reuse the "Target Range" element to show the Rate and Points
-            // Or we can dynamically update the label.
-            // Let's just change the text content.
-            const rangeLabel = document.querySelector('.result-item:nth-child(2) .label');
-            if (rangeLabel) rangeLabel.textContent = "Accumulation Rate";
+        const container = resultsSection.querySelector('.result-details');
+        // Clear everything after the header in resultsSection
+        resultsSection.innerHTML = '<h2>Optimization Result</h2>';
 
-            resultRange.innerHTML = `${ratePercentage}% <span style="font-size:0.8em; color:#666;">(${points} Points)</span>`;
-
-            result.items.forEach(item => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span>${item.name}</span>
-                    <div>
-                        <span class="item-price">${item.priceKRW.toLocaleString()} KRW</span>
-                        <span class="item-original">(${item.priceJPY} JPY)</span>
-                    </div>
-                `;
-                resultItemsList.appendChild(li);
-            });
-
-            resultsSection.scrollIntoView({ behavior: 'smooth' });
-        } else {
-            resultTotal.textContent = "No Match";
-            resultRange.textContent = "-";
-            const li = document.createElement('li');
-            li.textContent = "No combination found >= 5,000 KRW.";
-            resultItemsList.appendChild(li);
+        if (results.length === 0) {
+            resultsSection.innerHTML += '<p style="padding:20px; color:var(--text-muted);">No combination found >= 5,000 KRW.</p>';
+            return;
         }
+
+        results.forEach((result, index) => {
+            const points = result.points;
+            const ratePercentage = (result.rate * 100).toFixed(2);
+            const rankLabel = index === 0 ? "Best Option" : "Alternative Option";
+            const rankClass = index === 0 ? "best-option" : "alt-option";
+
+            const html = `
+                <div class="result-block ${rankClass}" style="margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 12px;">${rankLabel}</h3>
+                    <div class="result-summary" style="margin-bottom: 12px; padding-bottom: 0; border: none;">
+                        <div class="result-item">
+                            <span class="label">Total Amount</span>
+                            <span class="value">${result.sum.toLocaleString()} KRW</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="label">Accumulation Rate</span>
+                            <span class="value">${ratePercentage}% <span style="font-size:0.6em; color:#666;">(${points} P)</span></span>
+                        </div>
+                    </div>
+                    <ul class="result-items-list" style="list-style: none;">
+                        ${result.items.map(item => `
+                            <li style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee;">
+                                <span>${item.name} <span style="font-size:0.8em; color:#ec4899;">(-${item.discount}%)</span></span>
+                                <div style="text-align: right;">
+                                    <span class="item-price" style="display:block;">${item.priceKRW.toLocaleString()} KRW</span>
+                                    <span class="item-original" style="font-size:0.8em; color:#999;">(${item.finalPriceJPY} JPY)</span>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+            resultsSection.innerHTML += html;
+        });
+
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
     }
 });
