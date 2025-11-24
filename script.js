@@ -194,8 +194,37 @@ document.addEventListener('DOMContentLoaded', () => {
         displayResults(results);
     }
 
+    // Find Top 2 Subsets Sequentially (Greedy approach for the second group)
     function findTopSubsets(items) {
-        const validSubsets = [];
+        const results = [];
+
+        // 1. Find the absolute best subset from all items
+        const firstBest = findBestSubset(items);
+
+        if (firstBest) {
+            results.push(firstBest);
+
+            // 2. Remove items used in the first subset
+            // We need a way to identify items uniquely. 
+            // Since 'items' objects are references, we can check for inclusion.
+            const usedItemsSet = new Set(firstBest.items);
+            const remainingItems = items.filter(item => !usedItemsSet.has(item));
+
+            // 3. Find the best subset from the remaining items
+            const secondBest = findBestSubset(remainingItems);
+            if (secondBest) {
+                results.push(secondBest);
+            }
+        }
+
+        return results;
+    }
+
+    function findBestSubset(items) {
+        let bestRate = -1;
+        let bestSubset = null;
+        let bestSum = 0;
+        let bestPoints = 0;
 
         // Backtracking to find all valid subsets
         function backtrack(index, currentSum, currentItems) {
@@ -203,12 +232,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (currentSum >= 5000) {
                     const points = (currentSum % 1000) * 2;
                     const rate = points / currentSum;
-                    validSubsets.push({
-                        sum: currentSum,
-                        items: [...currentItems],
-                        rate: rate,
-                        points: points
-                    });
+
+                    if (rate > bestRate) {
+                        bestRate = rate;
+                        bestSubset = [...currentItems];
+                        bestSum = currentSum;
+                        bestPoints = points;
+                    } else if (rate === bestRate) {
+                        // Tie-breaker: Prefer higher points (higher sum usually)
+                        if (points > bestPoints) {
+                            bestSubset = [...currentItems];
+                            bestSum = currentSum;
+                            bestPoints = points;
+                        }
+                    }
                 }
                 return;
             }
@@ -222,20 +259,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         backtrack(0, 0, []);
 
-        // Sort by Rate (desc), then Points (desc), then Sum (desc)
-        validSubsets.sort((a, b) => {
-            if (b.rate !== a.rate) return b.rate - a.rate;
-            if (b.points !== a.points) return b.points - a.points;
-            return b.sum - a.sum;
-        });
-
-        // Return top 2 unique subsets (by content)
-        // Simple deduplication strategy: check if item names are identical? 
-        // Or just return top 2. If they are same items, it's same subset.
-        // Since we iterate all subsets, we might have duplicates if we had identical items? 
-        // No, items are distinct by index in backtracking.
-
-        return validSubsets.slice(0, 2);
+        if (bestSubset) {
+            return {
+                sum: bestSum,
+                items: bestSubset,
+                rate: bestRate,
+                points: bestPoints
+            };
+        }
+        return null;
     }
 
     function displayResults(results) {
