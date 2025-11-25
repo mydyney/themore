@@ -62,24 +62,68 @@ document.addEventListener('DOMContentLoaded', () => {
         rateSourceText.textContent = "Fetching rate...";
         exchangeRateInput.placeholder = "Loading...";
 
+        const requestHeaders = {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4d3RwcnBlb2J6bnV2dWxmdmduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQzMDI5NjMsImV4cCI6MjAxOTg3ODk2M30.Qw2ijlhoS_LhYWmJgz3BkBgTNYfwdxlGcHSuXHQRnBM',
+            'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4d3RwcnBlb2J6bnV2dWxmdmduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQzMDI5NjMsImV4cCI6MjAxOTg3ODk2M30.Qw2ijlhoS_LhYWmJgz3BkBgTNYfwdxlGcHSuXHQRnBM'
+        };
+
+        let rate100;
+        let sourceText;
+
         try {
-            let rate100;
-            let sourceText;
-
             try {
-                // 1. Try fetching from local server (for Scraper/Server mode)
-                const response = await fetch('/api/rate');
-                if (!response.ok) throw new Error("Server offline");
-                const data = await response.json();
+                // Get latest date
+                const dateResponse = await fetch(
+                    'https://qxwtprpeobznuvulfvgn.supabase.co/rest/v1/ThemoreFx?select=date&order=date.desc&limit=1',
+                    { headers: requestHeaders }
+                );
+                const dateData = await dateResponse.json();
 
-                if (data && data.rate) {
-                    rate100 = data.rate;
-                    isRateFinal = !!data.isFinal; // Set flag based on server response
-                    const timeStr = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : 'Unknown';
-                    sourceText = `Rate from <strong>${data.source || 'Shinhan Bank'}</strong> (Server at ${timeStr})`;
+                if (dateData && dateData.length > 0) {
+                    const latestDate = dateData[0].date;
+
+                    // Fetch data for latest date
+                    const dataResponse = await fetch(
+                        `https://qxwtprpeobznuvulfvgn.supabase.co/rest/v1/ThemoreFx?select=date,data&date=eq.${latestDate}`,
+                        { headers: requestHeaders }
+                    );
+                    const rateDataResponse = await dataResponse.json();
+
+                    if (rateDataResponse && rateDataResponse.length > 0) {
+                        const rateData = rateDataResponse[0].data;
+
+                        if (rateData.rate && rateData.rate.KRW && rateData.rate.USD) {
+                            const usdToKrw = rateData.rate.KRW.USD;
+                            const usdToJpy = rateData.rate.USD.JPY; // JPY -> USD rate
+
+                            // Fee Calculation Logic (Same as server.js)
+                            const rawUsd = 100 * parseFloat(usdToJpy);
+                            const rawUsdRounded = Number(rawUsd.toFixed(2));
+
+                            // VISA Fee 1.1%
+                            const usdWithVisa = Math.floor((rawUsdRounded * 1.011) * 100) / 100;
+
+                            // Shinhan Fee 0.18%
+                            const shFee = Math.floor(usdWithVisa * usdToKrw * 0.0018);
+
+                            // KRW Base
+                            const krwBase = Math.floor(usdWithVisa * usdToKrw);
+                            const finalKrw = krwBase + shFee;
+
+                            rate100 = finalKrw;
+                            isRateFinal = true;
+                            const timeStr = new Date().toLocaleTimeString();
+                            sourceText = `Rate from <strong>TheMore (Final)</strong> (Client at ${timeStr})`;
+                        } else {
+                            throw new Error("Invalid data structure from Supabase");
+                        }
+                    } else {
+                        throw new Error("No rate data found");
+                    }
                 } else {
-                    throw new Error("No data from server");
+                    throw new Error("No date found");
                 }
+
             } catch (serverError) {
                 // 2. Fallback: Show link to Shinhan Bank (for GitHub Pages / Static mode)
                 console.log("Server fetch failed:", serverError.message);
