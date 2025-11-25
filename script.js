@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultItemsList = document.getElementById('result-items-list');
 
     let productCount = 0;
+    let isRateFinal = false; // Track if the current rate is final (fetched) or manual
 
     // Initialize
     fetchExchangeRate();
@@ -34,12 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     exchangeRateInput.addEventListener('input', () => {
+        isRateFinal = false; // Manual input means it's not the final fetched rate
         updateTargetDisplay();
     });
 
     function updateTargetDisplay() {
         const rawRate = parseFloat(exchangeRateInput.value);
-        const rate100 = rawRate * 1.008; // Apply 1.008 multiplier
+        // User requested to divide by 1.011
+        const rate100 = rawRate / 1.011;
+
         const valueSpan = targetJpyDisplay.querySelector('.value');
 
         if (!isNaN(rate100) && rate100 > 0) {
@@ -70,8 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (data && data.rate) {
                     rate100 = data.rate;
+                    isRateFinal = !!data.isFinal; // Set flag based on server response
                     const timeStr = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : 'Unknown';
-                    sourceText = `Rate from <strong>Shinhan Bank</strong> (Server at ${timeStr})`;
+                    sourceText = `Rate from <strong>${data.source || 'Shinhan Bank'}</strong> (Server at ${timeStr})`;
                 } else {
                     throw new Error("No data from server");
                 }
@@ -111,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = document.createElement('div');
         row.className = 'product-row';
         row.innerHTML = `
-            <input type="text" placeholder="Product Name ${productCount}" class="product-name" value="Product ${productCount}">
+            <input type="text" placeholder="Item Name ${productCount}" class="product-name" value="Item ${productCount}">
             <div class="input-wrapper">
                 <input type="number" placeholder="Price" class="product-price">
                 <span class="unit">JPY</span>
@@ -156,7 +161,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function calculateBestCombination() {
         const rawRate = parseFloat(exchangeRateInput.value);
-        const rate100 = rawRate * 1.008; // Apply 1.008 multiplier
+        // User requested to divide by 1.011
+        const rate100 = rawRate / 1.011;
+
         if (isNaN(rate100)) {
             alert("Please enter a valid exchange rate.");
             return;
@@ -164,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const products = getProducts();
         if (products.length === 0) {
-            alert("Please add at least one product with a price.");
+            alert("Please add at least one item with a price.");
             return;
         }
 
