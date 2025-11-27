@@ -41,8 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateTargetDisplay() {
         const rawRate = parseFloat(exchangeRateInput.value);
-        // User requested to divide by 1.011
-        const rate100 = rawRate / 1.011;
+        // User requested to use raw rate directly (removed 1.011 division)
+        const rate100 = rawRate;
 
         const valueSpan = targetJpyDisplay.querySelector('.value');
 
@@ -205,8 +205,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function calculateBestCombination() {
         const rawRate = parseFloat(exchangeRateInput.value);
-        // User requested to divide by 1.011
-        const rate100 = rawRate / 1.011;
+        // User requested to use raw rate directly (removed 1.011 division)
+        const rate100 = rawRate;
 
         if (isNaN(rate100)) {
             alert("Please enter a valid exchange rate.");
