@@ -136,8 +136,9 @@ async function fetchRate() {
 
                     const rawUsdRounded = Number(rawUsd.toFixed(2));
 
-                    // Pure Exchange Rate (No Fees)
-                    const finalKrw = Math.floor(rawUsdRounded * usdToKrw);
+                    // Pure Exchange Rate (No Fees) -> Final Fee 0.95%
+                    const baseKrw = Math.floor(rawUsdRounded * usdToKrw);
+                    const finalKrw = Math.floor(baseKrw * 1.0095);
 
                     latestRateData = {
                         rate: finalKrw,
