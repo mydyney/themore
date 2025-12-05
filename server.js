@@ -138,7 +138,7 @@ async function fetchRate() {
 
                     // feeCalc('USD') logic:
                     // outseaUsingAmount = roundDown(amount * 1.011, 2)
-                    const usdWithVisa = Math.floor((rawUsdRounded * 1.011) * 100) / 100;
+                    const usdWithVisa = Math.floor((rawUsdRounded * 1.0085) * 100) / 100;
 
                     // shfee = Math.floor(outseaUsingAmount * price * 0.0018)
                     const shFee = Math.floor(usdWithVisa * usdToKrw * 0.0018);
