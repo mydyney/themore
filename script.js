@@ -100,15 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             const rawUsd = 100 * parseFloat(usdToJpy);
                             const rawUsdRounded = Number(rawUsd.toFixed(2));
 
-                            // VISA Fee 1.1%
-                            const usdWithVisa = Math.floor((rawUsdRounded * 1.014) * 100) / 100;
-
-                            // Shinhan Fee 0.18%
-                            const shFee = Math.floor(usdWithVisa * usdToKrw * 0.0018);
-
-                            // KRW Base
-                            const krwBase = Math.floor(usdWithVisa * usdToKrw);
-                            const finalKrw = krwBase + shFee;
+                            // Pure Exchange Rate (No Fees)
+                            const finalKrw = Math.floor(rawUsdRounded * usdToKrw);
 
                             rate100 = finalKrw;
                             isRateFinal = true;

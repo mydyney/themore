@@ -136,16 +136,8 @@ async function fetchRate() {
 
                     const rawUsdRounded = Number(rawUsd.toFixed(2));
 
-                    // feeCalc('USD') logic:
-                    // outseaUsingAmount = roundDown(amount * 1.011, 2)
-                    const usdWithVisa = Math.floor((rawUsdRounded * 1.014) * 100) / 100;
-
-                    // shfee = Math.floor(outseaUsingAmount * price * 0.0018)
-                    const shFee = Math.floor(usdWithVisa * usdToKrw * 0.0018);
-
-                    // value = roundDown(outseaUsingAmount * price, 0) + shfee
-                    const krwBase = Math.floor(usdWithVisa * usdToKrw);
-                    const finalKrw = krwBase + shFee;
+                    // Pure Exchange Rate (No Fees)
+                    const finalKrw = Math.floor(rawUsdRounded * usdToKrw);
 
                     latestRateData = {
                         rate: finalKrw,
