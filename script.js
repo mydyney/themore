@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const rawUsdRounded = Number(rawUsd.toFixed(2));
 
                             // VISA Fee 1.1%
-                            const usdWithVisa = Math.floor((rawUsdRounded * 1.0195) * 100) / 100;
+                            const usdWithVisa = Math.floor((rawUsdRounded * 1.014) * 100) / 100;
 
                             // Shinhan Fee 0.18%
                             const shFee = Math.floor(usdWithVisa * usdToKrw * 0.0018);
