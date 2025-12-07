@@ -159,13 +159,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="number" placeholder="Price" class="product-price">
                 <span class="unit">JPY</span>
             </div>
-            <select class="discount-select" title="Discount">
-                <option value="0">0%</option>
-                <option value="10">10%</option>
-                <option value="20">20%</option>
-                <option value="30">30%</option>
-                <option value="40">40%</option>
-                <option value="50">50%</option>
+            <select class="discount-select" title="Discount / Tax">
+                <option value="tax8">8% Tax (Add)</option>
+                <option value="tax10">10% Tax (Add)</option>
+                <option value="0" selected>0% (Tax Incl.)</option>
+                <option value="10">10% Discount</option>
+                <option value="20">20% Discount</option>
+                <option value="30">30% Discount</option>
+                <option value="40">40% Discount</option>
+                <option value="50">50% Discount</option>
             </select>
             <button class="remove-btn" title="Remove">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
@@ -188,10 +190,10 @@ document.addEventListener('DOMContentLoaded', () => {
         rows.forEach(row => {
             const name = row.querySelector('.product-name').value;
             const priceJPY = parseFloat(row.querySelector('.product-price').value);
-            const discount = parseInt(row.querySelector('.discount-select').value, 10);
+            const discountValue = row.querySelector('.discount-select').value; // Keep as string
 
             if (name && !isNaN(priceJPY)) {
-                products.push({ name, priceJPY, discount });
+                products.push({ name, priceJPY, discountValue });
             }
         });
         return products;
@@ -216,15 +218,33 @@ document.addEventListener('DOMContentLoaded', () => {
         // Convert JPY to KRW with Discount Logic
         // Logic: Pre-tax -> Discount -> Tax -> KRW
         const items = products.map(p => {
-            // 1. Convert to pre-tax (8% tax included in price)
-            // Using Math.floor to be conservative/standard for base price extraction
-            const basePrice = Math.floor(p.priceJPY / 1.08);
+            // 1. Determine Final JPY Price based on type
+            let finalPriceJPY;
+            let discountDisplay = "";
 
-            // 2. Apply Discount
-            const discountedBase = Math.floor(basePrice * (1 - p.discount / 100));
+            if (p.discountValue === 'tax8') {
+                // Add 8% Tax
+                finalPriceJPY = Math.floor(p.priceJPY * 1.08);
+                discountDisplay = "+8% Tax";
+            } else if (p.discountValue === 'tax10') {
+                // Add 10% Tax
+                finalPriceJPY = Math.floor(p.priceJPY * 1.10);
+                discountDisplay = "+10% Tax";
+            } else {
+                // Existing Discount Logic (Assumes Tax Included in Input)
+                const discountPercent = parseInt(p.discountValue, 10);
 
-            // 3. Re-apply Tax (8%)
-            const finalPriceJPY = Math.floor(discountedBase * 1.08);
+                // 1. Convert to pre-tax (8% tax included in price)
+                const basePrice = Math.floor(p.priceJPY / 1.08);
+
+                // 2. Apply Discount
+                const discountedBase = Math.floor(basePrice * (1 - discountPercent / 100));
+
+                // 3. Re-apply Tax (8%)
+                finalPriceJPY = Math.floor(discountedBase * 1.08);
+
+                discountDisplay = `-${discountPercent}%`;
+            }
 
             // 4. Convert to KRW
             const priceKRW = Math.floor(finalPriceJPY * (rate100 / 100));
@@ -232,7 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return {
                 ...p,
                 finalPriceJPY,
-                priceKRW
+                priceKRW,
+                discountDisplay
             };
         });
 
@@ -356,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <ul class="result-items-list" style="list-style: none;">
                         ${result.items.map(item => `
                             <li style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee;">
-                                <span>${item.name} <span style="font-size:0.8em; color:#ec4899;">(-${item.discount}%)</span></span>
+                                <span>${item.name} <span style="font-size:0.8em; color:#ec4899;">(${item.discountDisplay})</span></span>
                                 <div style="text-align: right;">
                                     <span class="item-price" style="display:block;">${item.priceKRW.toLocaleString()} KRW</span>
                                     <span class="item-original" style="font-size:0.8em; color:#999;">(${item.finalPriceJPY} JPY)</span>
