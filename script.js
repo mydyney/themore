@@ -262,7 +262,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Find Top 2 Subsets
         const results = findTopSubsets(items);
-        displayResults(results, totalAllItemsKRW);
+
+        // Identify unused items
+        const usedItemsSet = new Set();
+        results.forEach(result => {
+            result.items.forEach(item => usedItemsSet.add(item));
+        });
+
+        const unusedItems = items.filter(item => !usedItemsSet.has(item));
+        const unusedSum = unusedItems.reduce((sum, item) => sum + item.priceKRW, 0);
+
+        displayResults(results, totalAllItemsKRW, unusedSum);
     }
 
     // Find Top 2 Subsets Sequentially (Greedy approach for the second group)
@@ -341,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
-    function displayResults(results, totalAllItemsKRW = 0) {
+    function displayResults(results, totalAllItemsKRW = 0, unusedSum = 0) {
         resultsSection.classList.remove('hidden');
 
         // Clear previous results
@@ -481,6 +491,50 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             resultsSection.innerHTML += html;
         });
+
+        // Add Recommendations for Unused Items
+        if (unusedSum > 0) {
+            const currentTotalKRW = unusedSum;
+            const recommendations = [];
+            let nextTarget = 5999;
+
+            if (currentTotalKRW >= 5999) {
+                nextTarget = Math.floor(currentTotalKRW / 1000) * 1000 + 999;
+                if (nextTarget <= currentTotalKRW) nextTarget += 1000;
+            }
+
+            for (let i = 0; i < 3; i++) {
+                const target = nextTarget + (i * 1000);
+                const diffKRW = target - currentTotalKRW;
+                const rate100 = parseFloat(exchangeRateInput.value);
+                const requiredJPY = (diffKRW / rate100) * 100;
+
+                recommendations.push({
+                    target: target,
+                    diffKRW: diffKRW,
+                    requiredJPY: requiredJPY
+                });
+            }
+
+            const recHtml = `
+                <div class="recommendation-block" style="margin-top: 24px; padding-top: 16px; border-top: 2px solid var(--border-color);">
+                    <h3 style="color: var(--primary-color); margin-bottom: 12px;">To make a combination</h3>
+                    <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 12px;">Unused Total: <strong>${currentTotalKRW.toLocaleString()} KRW</strong>. Add these amounts to reach x,999 KRW:</p>
+                    <ul style="list-style: none;">
+                        ${recommendations.map(rec => `
+                            <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
+                                <span>Target <strong style="color: #10b981;">${rec.target.toLocaleString()} KRW</strong></span>
+                                <div style="text-align: right;">
+                                    <span style="display:block; font-weight:bold;">+ ${rec.requiredJPY.toFixed(2)} JPY</span>
+                                    <span style="font-size:0.8em; color:#999;">(Needs ${rec.diffKRW.toLocaleString()} KRW)</span>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+            resultsSection.innerHTML += recHtml;
+        }
 
         resultsSection.scrollIntoView({ behavior: 'smooth' });
     }
