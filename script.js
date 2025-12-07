@@ -257,9 +257,12 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         });
 
+        // Calculate total sum of all items for fallback recommendation
+        const totalAllItemsKRW = items.reduce((sum, item) => sum + item.priceKRW, 0);
+
         // Find Top 2 Subsets
         const results = findTopSubsets(items);
-        displayResults(results);
+        displayResults(results, totalAllItemsKRW);
     }
 
     // Find Top 2 Subsets Sequentially (Greedy approach for the second group)
@@ -338,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
-    function displayResults(results) {
+    function displayResults(results, totalAllItemsKRW = 0) {
         resultsSection.classList.remove('hidden');
 
         // Clear previous results
@@ -352,6 +355,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (results.length === 0) {
             resultsSection.innerHTML += '<p style="padding:20px; color:var(--text-muted);">No combination found >= 5,000 KRW.</p>';
+
+            // Fallback Recommendation for Low Amount
+            if (totalAllItemsKRW > 0) {
+                const currentTotalKRW = totalAllItemsKRW;
+                const recommendations = [];
+                // Start targets from 5999 since we are under 5000
+                let nextTarget = 5999;
+
+                // If by chance total is > 5999 but no subset found (unlikely with simple logic but possible), adjust
+                if (currentTotalKRW >= 5999) {
+                    nextTarget = Math.floor(currentTotalKRW / 1000) * 1000 + 999;
+                    if (nextTarget <= currentTotalKRW) nextTarget += 1000;
+                }
+
+                for (let i = 0; i < 3; i++) {
+                    const target = nextTarget + (i * 1000);
+                    const diffKRW = target - currentTotalKRW;
+                    const rate100 = parseFloat(exchangeRateInput.value);
+                    const requiredJPY = (diffKRW / rate100) * 100;
+
+                    recommendations.push({
+                        target: target,
+                        diffKRW: diffKRW,
+                        requiredJPY: requiredJPY
+                    });
+                }
+
+                const recHtml = `
+                    <div class="recommendation-block" style="margin: 0 20px 20px 20px; padding-top: 16px; border-top: 2px solid var(--border-color);">
+                        <h3 style="color: var(--primary-color); margin-bottom: 12px;">Recommendation Result</h3>
+                        <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 12px;">Current Total: <strong>${currentTotalKRW.toLocaleString()} KRW</strong>. Add these amounts to reach x,999 KRW:</p>
+                        <ul style="list-style: none;">
+                            ${recommendations.map(rec => `
+                                <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
+                                    <span>Target <strong style="color: #10b981;">${rec.target.toLocaleString()} KRW</strong></span>
+                                    <div style="text-align: right;">
+                                        <span style="display:block; font-weight:bold;">+ ${rec.requiredJPY.toFixed(2)} JPY</span>
+                                        <span style="font-size:0.8em; color:#999;">(Needs ${rec.diffKRW.toLocaleString()} KRW)</span>
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+                resultsSection.innerHTML += recHtml;
+            }
             return;
         }
 
