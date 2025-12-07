@@ -270,9 +270,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const unusedItems = items.filter(item => !usedItemsSet.has(item));
-        const unusedSum = unusedItems.reduce((sum, item) => sum + item.priceKRW, 0);
+        // const unusedSum = unusedItems.reduce((sum, item) => sum + item.priceKRW, 0); // No longer needed here
 
-        displayResults(results, totalAllItemsKRW, unusedSum);
+        displayResults(results, totalAllItemsKRW, unusedItems);
     }
 
     // Find Top 2 Subsets Sequentially (Greedy approach for the second group)
@@ -351,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
-    function displayResults(results, totalAllItemsKRW = 0, unusedSum = 0) {
+    function displayResults(results, totalAllItemsKRW = 0, unusedItems = []) {
         resultsSection.classList.remove('hidden');
 
         // Clear previous results
@@ -493,6 +493,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Add Recommendations for Unused Items
+        const unusedSum = unusedItems.reduce((sum, item) => sum + item.priceKRW, 0);
+
         if (unusedSum > 0) {
             const currentTotalKRW = unusedSum;
             const recommendations = [];
@@ -519,6 +521,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const recHtml = `
                 <div class="recommendation-block" style="margin-top: 24px; padding-top: 16px; border-top: 2px solid var(--border-color);">
                     <h3 style="color: var(--primary-color); margin-bottom: 12px;">To make a combination</h3>
+                    
+                    <div style="margin-bottom: 12px; padding: 8px; background-color: #f9fafb; border-radius: 6px;">
+                        <p style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 4px;">Items included:</p>
+                        <ul style="list-style: none; padding-left: 0;">
+                            ${unusedItems.map(item => `
+                                <li style="font-size: 0.9em; display: flex; justify-content: space-between;">
+                                    <span>${item.name}</span>
+                                    <span>${item.priceKRW.toLocaleString()} KRW</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+
                     <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 12px;">Unused Total: <strong>${currentTotalKRW.toLocaleString()} KRW</strong>. Add these amounts to reach x,999 KRW:</p>
                     <ul style="list-style: none;">
                         ${recommendations.map(rec => `
