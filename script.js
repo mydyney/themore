@@ -361,6 +361,48 @@ document.addEventListener('DOMContentLoaded', () => {
             const rankLabel = index === 0 ? "Best Option" : "Alternative Option";
             const rankClass = index === 0 ? "best-option" : "alt-option";
 
+            // Recommendation Logic
+            let recHtml = "";
+            // Skip if the hundreds digit is > 800 (e.g., 5850, 5900)
+            if ((result.sum % 1000) <= 800) {
+                const currentTotalKRW = result.sum;
+                const recommendations = [];
+                let nextTarget = Math.floor(currentTotalKRW / 1000) * 1000 + 999;
+
+                if (nextTarget <= currentTotalKRW) {
+                    nextTarget += 1000;
+                }
+
+                for (let i = 0; i < 3; i++) {
+                    const target = nextTarget + (i * 1000);
+                    const diffKRW = target - currentTotalKRW;
+                    const rate100 = parseFloat(exchangeRateInput.value);
+                    const requiredJPY = (diffKRW / rate100) * 100;
+
+                    recommendations.push({
+                        target: target,
+                        diffKRW: diffKRW,
+                        requiredJPY: requiredJPY
+                    });
+                }
+
+                recHtml = `
+                    <div class="recommendation-block" style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border-color);">
+                        <p style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 8px;"><strong>Recommendation:</strong> Add to reach x,999 KRW</p>
+                        <ul style="list-style: none;">
+                            ${recommendations.map(rec => `
+                                <li style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.9em;">
+                                    <span>Target <strong style="color: #10b981;">${rec.target.toLocaleString()}</strong></span>
+                                    <div style="text-align: right;">
+                                        <span style="font-weight:bold;">+${rec.requiredJPY.toFixed(2)} JPY</span>
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
             const html = `
                 <div class="result-block ${rankClass}" style="margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
                     <h3 style="color: var(--primary-color); margin-bottom: 12px;">${rankLabel}</h3>
@@ -385,61 +427,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             </li>
                         `).join('')}
                     </ul>
+                    ${recHtml}
                 </div>
             `;
             resultsSection.innerHTML += html;
         });
-
-        // Add Recommendations Section
-        if (results.length > 0) {
-            const bestResult = results[0];
-            const currentTotalKRW = bestResult.sum;
-
-            // Calculate next 3 targets ending in 999
-            // Example: 5100 -> 5999, 6999, 7999
-            // If current is 5999 -> 6999, 7999, 8999
-
-            const recommendations = [];
-            let nextTarget = Math.floor(currentTotalKRW / 1000) * 1000 + 999;
-
-            if (nextTarget <= currentTotalKRW) {
-                nextTarget += 1000;
-            }
-
-            for (let i = 0; i < 3; i++) {
-                const target = nextTarget + (i * 1000);
-                const diffKRW = target - currentTotalKRW;
-                // Calculate required JPY: (Diff KRW / Rate) * 100
-                // We use the raw rate (rate100) which is KRW per 100 JPY
-                const rate100 = parseFloat(exchangeRateInput.value);
-                const requiredJPY = (diffKRW / rate100) * 100;
-
-                recommendations.push({
-                    target: target,
-                    diffKRW: diffKRW,
-                    requiredJPY: requiredJPY
-                });
-            }
-
-            const recHtml = `
-                <div class="recommendation-block" style="margin-top: 24px; padding-top: 16px; border-top: 2px solid var(--border-color);">
-                    <h3 style="color: var(--primary-color); margin-bottom: 12px;">Recommendation Result</h3>
-                    <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 12px;">Add these amounts to reach x,999 KRW:</p>
-                    <ul style="list-style: none;">
-                        ${recommendations.map(rec => `
-                            <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
-                                <span>Target <strong style="color: #10b981;">${rec.target.toLocaleString()} KRW</strong></span>
-                                <div style="text-align: right;">
-                                    <span style="display:block; font-weight:bold;">+ ${rec.requiredJPY.toFixed(2)} JPY</span>
-                                    <span style="font-size:0.8em; color:#999;">(Needs ${rec.diffKRW.toLocaleString()} KRW)</span>
-                                </div>
-                            </li>
-                        `).join('')}
-                    </ul>
-                </div>
-            `;
-            resultsSection.innerHTML += recHtml;
-        }
 
         resultsSection.scrollIntoView({ behavior: 'smooth' });
     }
