@@ -418,11 +418,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <ul class="result-items-list" style="list-style: none;">
                         ${result.items.map(item => `
-                            <li style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee;">
-                                <span>${item.name} <span style="font-size:0.8em; color:#ec4899;">(${item.discountDisplay})</span></span>
+                            <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
+                                <span style="font-size: 1.1rem; font-weight: 500;">${item.name} <span style="font-size:0.8em; color:#ec4899;">(${item.discountDisplay})</span></span>
                                 <div style="text-align: right;">
-                                    <span class="item-price" style="display:block;">${item.priceKRW.toLocaleString()} KRW</span>
-                                    <span class="item-original" style="font-size:0.8em; color:#999;">(${item.finalPriceJPY} JPY)</span>
+                                    <span class="item-price" style="display:block; font-size: 1.1rem;">${item.priceKRW.toLocaleString()} KRW</span>
+                                    <span class="item-original" style="font-size:0.85em; color:#999;">(${item.finalPriceJPY} JPY)</span>
                                 </div>
                             </li>
                         `).join('')}
