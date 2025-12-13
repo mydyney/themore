@@ -100,9 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             const rawUsd = 100 * parseFloat(usdToJpy);
                             const rawUsdRounded = Number(rawUsd.toFixed(2));
 
-                            // Pure Exchange Rate (No Fees) -> Final Fee 0.93%
+                            // Pure Exchange Rate (No Fees) -> Final Fee 1.1%
                             const baseKrw = Math.floor(rawUsdRounded * usdToKrw);
-                            const finalKrw = Math.floor(baseKrw * 1.0093);
+                            const finalKrw = Math.floor(baseKrw * 1.011);
 
                             rate100 = finalKrw;
                             isRateFinal = true;
