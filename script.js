@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <option value="tax8">8% Tax (Add)</option>
                 <option value="tax10">10% Tax (Add)</option>
                 <option value="0" selected>0% (Tax Incl.)</option>
+                <option value="5">5% Discount</option>
                 <option value="10">10% Discount</option>
                 <option value="20">20% Discount</option>
                 <option value="30">30% Discount</option>
