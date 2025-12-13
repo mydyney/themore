@@ -100,9 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             const rawUsd = 100 * parseFloat(usdToJpy);
                             const rawUsdRounded = Number(rawUsd.toFixed(2));
 
-                            // Pure Exchange Rate (No Fees) -> Final Fee 1.3%
+                            // Pure Exchange Rate (No Fees) -> Final Fee 1.2%
                             const baseKrw = Math.floor(rawUsdRounded * usdToKrw);
-                            const finalKrw = Math.floor(baseKrw * 1.013);
+                            const finalKrw = Math.floor(baseKrw * 1.012);
 
                             rate100 = finalKrw;
                             isRateFinal = true;
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // If reverse-calculated JPY doesn't match target JPY, add correction
             while (reverseJPY < targetJPY) {
                 // Calculate 1 JPY in KRW without fee (pure exchange rate)
-                const baseRate = rate100 / 1.013; // Remove the 1.3% fee
+                const baseRate = rate100 / 1.012; // Remove the 1.2% fee
                 const oneJpyInKrw = Math.floor(baseRate / 100);
                 priceKRW += oneJpyInKrw;
                 reverseJPY = Math.floor(priceKRW / (rate100 / 100)); // Re-calculate reverseJPY
