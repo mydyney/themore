@@ -231,8 +231,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Add 10% Tax
                 finalPriceJPY = Math.floor(p.priceJPY * 1.10);
                 discountDisplay = "+10% Tax";
+            } else if (p.discountValue === '0') {
+                // 0% Discount: No tax calculation, use input price directly
+                finalPriceJPY = p.priceJPY;
+                discountDisplay = "0% (Tax Incl.)";
             } else {
-                // Existing Discount Logic (Assumes Tax Included in Input)
+                // Discount Logic (Assumes Tax Included in Input)
                 const discountPercent = parseInt(p.discountValue, 10);
 
                 // 1. Convert to pre-tax (8% tax included in price)
@@ -248,7 +252,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 4. Convert to KRW
-            const priceKRW = Math.floor(finalPriceJPY * (rate100 / 100));
+            let priceKRW = Math.floor(finalPriceJPY * (rate100 / 100));
+
+            // 5. Correction: Verify reverse calculation matches ORIGINAL input JPY
+            // For discount cases, we want the reverse calculation to match the original input
+            let targetJPY = p.priceJPY; // Use original input JPY
+
+            // For tax-add cases (tax8, tax10), the target should be the final price
+            if (p.discountValue === 'tax8' || p.discountValue === 'tax10') {
+                targetJPY = finalPriceJPY;
+            }
+
+            // Reverse calculate: KRW -> JPY
+            let reverseJPY = Math.floor(priceKRW / (rate100 / 100));
+
+            // If reverse-calculated JPY doesn't match target JPY, add correction
+            while (reverseJPY < targetJPY) {
+                // Calculate 1 JPY in KRW without fee (pure exchange rate)
+                const baseRate = rate100 / 1.013; // Remove the 1.3% fee
+                const oneJpyInKrw = Math.floor(baseRate / 100);
+                priceKRW += oneJpyInKrw;
+                reverseJPY = Math.floor(priceKRW / (rate100 / 100)); // Re-calculate reverseJPY
+            }
 
             return {
                 ...p,
