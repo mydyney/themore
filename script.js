@@ -2,7 +2,7 @@
 const translations = {
     ko: {
         title: "더모아 계산기",
-        subtitle: "JPY 지출을 최적화하여 최대 혜택을 받으세요",
+        subtitle: "일본 여행 시 더모아 카드로 최대 할인 혜택을 받으세요.",
         exchangeRate: "환율",
         sendRateLabel: "송금 환율 (100 JPY당 KRW, 카드 수수료 포함)",
         loading: "로딩 중...",
