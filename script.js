@@ -10,7 +10,7 @@ const translations = {
         targetLabel: "목표 (5,999 KRW):",
         items: "상품",
         addItem: "+ 상품 추가",
-        itemName: "상품명",
+        itemName: "상품",
         price: "가격",
         calculate: "최적 조합 계산",
         // Dynamic content translations
@@ -60,7 +60,7 @@ const translations = {
         targetLabel: "Target (5,999 KRW):",
         items: "Items",
         addItem: "+ Add Item",
-        itemName: "Item Name",
+        itemName: "Item",
         price: "Price",
         calculate: "Calculate Best Combination",
         // Dynamic content translations
@@ -159,7 +159,7 @@ function translatePage() {
             const itemNum = index + 1;
             nameInput.placeholder = `${t.itemName} ${itemNum}`;
             // Update value only if it matches the old pattern
-            if (nameInput.value.match(/^(Item Name|상품명) \d+$/)) {
+            if (nameInput.value.match(/^(Item Name|Item|상품명|상품) \d+$/)) {
                 nameInput.value = `${t.itemName} ${itemNum}`;
             }
         }
