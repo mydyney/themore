@@ -485,21 +485,21 @@ input[type="text"]:focus {
     }
 
     .product-row input[type="text"] {
-        flex: 3.6;
+        flex: 2;
         /* Ratio 3.6 (10% smaller) */
         min-width: 0;
         /* Allow shrinking */
     }
 
     .input-wrapper {
-        flex: 6.6;
+        flex: 2;
         /* Ratio 6.6 (10% larger) */
         min-width: 0;
     }
 
     .discount-select {
-        flex: 0 0 auto;
-        width: 70px;
+        flex: 5;
+        min-width: 0;
         /* Fixed width for discount */
         margin-left: 4px;
     }
