@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         row.innerHTML = `
             <input type="text" placeholder="Item Name ${productCount}" class="product-name" value="Item ${productCount}">
             <div class="input-wrapper">
-                <span class="unit">￥</span>
+                <span class="unit-left">￥</span>
                 <input type="number" placeholder="Price" class="product-price" style="padding-left: 40px;">
             </div>
             <select class="discount-select" title="Discount / Tax">

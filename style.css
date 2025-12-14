@@ -120,6 +120,14 @@ input[type="text"]:focus {
 
 .unit {
     position: absolute;
+    right: 16px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.unit-left {
+    position: absolute;
     left: 16px;
     color: var(--text-muted);
     font-size: 0.9rem;
