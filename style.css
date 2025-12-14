@@ -486,21 +486,17 @@ input[type="text"]:focus {
 
     .product-row input[type="text"] {
         flex: 2;
-        /* Ratio 3.6 (10% smaller) */
         min-width: 0;
-        /* Allow shrinking */
     }
 
     .input-wrapper {
-        flex: 2;
-        /* Ratio 6.6 (10% larger) */
+        flex: 3;
         min-width: 0;
     }
 
     .discount-select {
-        flex: 5;
+        flex: 4;
         min-width: 0;
-        /* Fixed width for discount */
         margin-left: 4px;
     }
 
