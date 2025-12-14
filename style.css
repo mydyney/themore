@@ -120,7 +120,7 @@ input[type="text"]:focus {
 
 .unit {
     position: absolute;
-    right: 16px;
+    left: 16px;
     color: var(--text-muted);
     font-size: 0.9rem;
     pointer-events: none;
@@ -445,15 +445,15 @@ input[type="text"]:focus {
     }
 
     .product-row input[type="text"] {
-        flex: 4;
-        /* Ratio 4 */
+        flex: 3.6;
+        /* Ratio 3.6 (10% smaller) */
         min-width: 0;
         /* Allow shrinking */
     }
 
     .input-wrapper {
-        flex: 6;
-        /* Ratio 6 */
+        flex: 6.6;
+        /* Ratio 6.6 (10% larger) */
         min-width: 0;
     }
 

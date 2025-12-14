@@ -51,9 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // JPY = (5999 / Rate100) * 100
             // or simply 599900 / Rate100
             const targetJPY = 599900 / rate100;
-            valueSpan.textContent = `≈ ${targetJPY.toFixed(2)} JPY`;
+            valueSpan.textContent = `≈ ￥${targetJPY.toFixed(2)}`;
         } else {
-            valueSpan.textContent = "-- JPY";
+            valueSpan.textContent = "-- ￥";
         }
     }
 
@@ -156,8 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
         row.innerHTML = `
             <input type="text" placeholder="Item Name ${productCount}" class="product-name" value="Item ${productCount}">
             <div class="input-wrapper">
-                <input type="number" placeholder="Price" class="product-price">
-                <span class="unit">JPY</span>
+                <span class="unit">￥</span>
+                <input type="number" placeholder="Price" class="product-price" style="padding-left: 40px;">
             </div>
             <select class="discount-select" title="Discount / Tax">
                 <option value="tax8">8% Tax (Add)</option>
@@ -298,7 +298,58 @@ document.addEventListener('DOMContentLoaded', () => {
         const unusedItems = items.filter(item => !usedItemsSet.has(item));
         // const unusedSum = unusedItems.reduce((sum, item) => sum + item.priceKRW, 0); // No longer needed here
 
-        displayResults(results, totalAllItemsKRW, unusedItems);
+        displayResults(results, totalAllItemsKRW, unusedItems, items);
+    }
+
+    // Helper function to determine tax rate from items
+    function getTaxRateFromItems(items) {
+        const hasTax8 = items.some(item => item.discountValue === 'tax8');
+        const hasTax10 = items.some(item => item.discountValue === 'tax10');
+
+        // If both exist, use 8%
+        if (hasTax8 && hasTax10) {
+            return { rate: 1.08, label: '8% tax excluded' };
+        } else if (hasTax8) {
+            return { rate: 1.08, label: '8% tax excluded' };
+        } else if (hasTax10) {
+            return { rate: 1.10, label: '10% tax excluded' };
+        }
+        return null; // No tax items
+    }
+
+    // Helper function to generate recommendations with tax consideration
+    function generateRecommendations(currentTotalKRW, items, rate100) {
+        const recommendations = [];
+        let nextTarget = 5999;
+
+        if (currentTotalKRW >= 5999) {
+            nextTarget = Math.floor(currentTotalKRW / 1000) * 1000 + 999;
+            if (nextTarget <= currentTotalKRW) nextTarget += 1000;
+        }
+
+        const taxInfo = getTaxRateFromItems(items);
+
+        for (let i = 0; i < 3; i++) {
+            const target = nextTarget + (i * 1000);
+            const diffKRW = target - currentTotalKRW;
+            let requiredJPY = (diffKRW / rate100) * 100;
+            let displayLabel = '';
+
+            if (taxInfo) {
+                // Convert to pre-tax price
+                requiredJPY = requiredJPY / taxInfo.rate;
+                displayLabel = taxInfo.label;
+            }
+
+            recommendations.push({
+                target: target,
+                diffKRW: diffKRW,
+                requiredJPY: requiredJPY,
+                taxLabel: displayLabel
+            });
+        }
+
+        return recommendations;
     }
 
     // Find Top 2 Subsets Sequentially (Greedy approach for the second group)
@@ -377,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
-    function displayResults(results, totalAllItemsKRW = 0, unusedItems = []) {
+    function displayResults(results, totalAllItemsKRW = 0, unusedItems = [], allItems = []) {
         resultsSection.classList.remove('hidden');
 
         // Clear previous results
@@ -395,28 +446,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Fallback Recommendation for Low Amount
             if (totalAllItemsKRW > 0) {
                 const currentTotalKRW = totalAllItemsKRW;
-                const recommendations = [];
-                // Start targets from 5999 since we are under 5000
-                let nextTarget = 5999;
-
-                // If by chance total is > 5999 but no subset found (unlikely with simple logic but possible), adjust
-                if (currentTotalKRW >= 5999) {
-                    nextTarget = Math.floor(currentTotalKRW / 1000) * 1000 + 999;
-                    if (nextTarget <= currentTotalKRW) nextTarget += 1000;
-                }
-
-                for (let i = 0; i < 3; i++) {
-                    const target = nextTarget + (i * 1000);
-                    const diffKRW = target - currentTotalKRW;
-                    const rate100 = parseFloat(exchangeRateInput.value);
-                    const requiredJPY = (diffKRW / rate100) * 100;
-
-                    recommendations.push({
-                        target: target,
-                        diffKRW: diffKRW,
-                        requiredJPY: requiredJPY
-                    });
-                }
+                const rate100 = parseFloat(exchangeRateInput.value);
+                const recommendations = generateRecommendations(currentTotalKRW, allItems, rate100);
 
                 const recHtml = `
                     <div class="recommendation-block" style="margin: 0 20px 20px 20px; padding-top: 16px; border-top: 2px solid var(--border-color);">
@@ -427,7 +458,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
                                     <span>Target <strong style="color: #10b981;">${rec.target.toLocaleString()} KRW</strong></span>
                                     <div style="text-align: right;">
-                                        <span style="display:block; font-weight:bold;">+ ${rec.requiredJPY.toFixed(2)} JPY</span>
+                                        <span style="display:block; font-weight:bold;">+ ￥${rec.requiredJPY.toFixed(2)}</span>
+                                        ${rec.taxLabel ? `<span style="font-size:0.75em; color:#ec4899;">(${rec.taxLabel})</span>` : ''}
                                         <span style="font-size:0.8em; color:#999;">(Needs ${rec.diffKRW.toLocaleString()} KRW)</span>
                                     </div>
                                 </li>
@@ -451,25 +483,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Skip if the hundreds digit is > 800 (e.g., 5850, 5900)
             if ((result.sum % 1000) <= 800) {
                 const currentTotalKRW = result.sum;
-                const recommendations = [];
-                let nextTarget = Math.floor(currentTotalKRW / 1000) * 1000 + 999;
-
-                if (nextTarget <= currentTotalKRW) {
-                    nextTarget += 1000;
-                }
-
-                for (let i = 0; i < 3; i++) {
-                    const target = nextTarget + (i * 1000);
-                    const diffKRW = target - currentTotalKRW;
-                    const rate100 = parseFloat(exchangeRateInput.value);
-                    const requiredJPY = (diffKRW / rate100) * 100;
-
-                    recommendations.push({
-                        target: target,
-                        diffKRW: diffKRW,
-                        requiredJPY: requiredJPY
-                    });
-                }
+                const rate100 = parseFloat(exchangeRateInput.value);
+                const recommendations = generateRecommendations(currentTotalKRW, result.items, rate100);
 
                 recHtml = `
                     <div class="recommendation-block" style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border-color);">
@@ -479,7 +494,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <li style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.9em;">
                                     <span>Target <strong style="color: #10b981;">${rec.target.toLocaleString()}</strong></span>
                                     <div style="text-align: right;">
-                                        <span style="font-weight:bold;">+${rec.requiredJPY.toFixed(2)} JPY</span>
+                                        <span style="font-weight:bold;">+￥${rec.requiredJPY.toFixed(2)}</span>
+                                        ${rec.taxLabel ? `<span style="display:block; font-size:0.75em; color:#ec4899;">(${rec.taxLabel})</span>` : ''}
                                     </div>
                                 </li>
                             `).join('')}
@@ -507,7 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span style="font-size: 1.1rem; font-weight: 500;">${item.name} <span style="font-size:0.8em; color:#ec4899;">(${item.discountDisplay})</span></span>
                                 <div style="text-align: right;">
                                     <span class="item-price" style="display:block; font-size: 1.1rem;">${item.priceKRW.toLocaleString()} KRW</span>
-                                    <span class="item-original" style="font-size:0.85em; color:#999;">(${item.finalPriceJPY} JPY)</span>
+                                    <span class="item-original" style="font-size:0.85em; color:#999;">(￥${item.finalPriceJPY})</span>
                                 </div>
                             </li>
                         `).join('')}
@@ -523,26 +539,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (unusedSum > 0) {
             const currentTotalKRW = unusedSum;
-            const recommendations = [];
-            let nextTarget = 5999;
-
-            if (currentTotalKRW >= 5999) {
-                nextTarget = Math.floor(currentTotalKRW / 1000) * 1000 + 999;
-                if (nextTarget <= currentTotalKRW) nextTarget += 1000;
-            }
-
-            for (let i = 0; i < 3; i++) {
-                const target = nextTarget + (i * 1000);
-                const diffKRW = target - currentTotalKRW;
-                const rate100 = parseFloat(exchangeRateInput.value);
-                const requiredJPY = (diffKRW / rate100) * 100;
-
-                recommendations.push({
-                    target: target,
-                    diffKRW: diffKRW,
-                    requiredJPY: requiredJPY
-                });
-            }
+            const rate100 = parseFloat(exchangeRateInput.value);
+            const recommendations = generateRecommendations(currentTotalKRW, unusedItems, rate100);
 
             const recHtml = `
                 <div class="recommendation-block" style="margin-top: 24px; padding-top: 16px; border-top: 2px solid var(--border-color);">
@@ -566,7 +564,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
                                 <span>Target <strong style="color: #10b981;">${rec.target.toLocaleString()} KRW</strong></span>
                                 <div style="text-align: right;">
-                                    <span style="display:block; font-weight:bold;">+ ${rec.requiredJPY.toFixed(2)} JPY</span>
+                                    <span style="display:block; font-weight:bold;">+ ￥${rec.requiredJPY.toFixed(2)}</span>
+                                    ${rec.taxLabel ? `<span style="display:block; font-size:0.75em; color:#ec4899;">(${rec.taxLabel})</span>` : ''}
                                     <span style="font-size:0.8em; color:#999;">(Needs ${rec.diffKRW.toLocaleString()} KRW)</span>
                                 </div>
                             </li>
