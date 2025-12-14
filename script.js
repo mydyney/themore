@@ -392,8 +392,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const removeBtn = row.querySelector('.remove-btn');
         removeBtn.addEventListener('click', () => {
-            if (productList.children.length > 1) {
+            if (productList.children.length > 3) {
                 row.remove();
+            } else {
+                // If 3 or fewer items, just clear the price
+                const priceInput = row.querySelector('.product-price');
+                if (priceInput) {
+                    priceInput.value = '';
+                }
             }
         });
 
