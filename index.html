@@ -15,19 +15,23 @@
 <body>
     <div class="container">
         <header>
-            <h1>The More Calculator</h1>
-            <p class="subtitle">Optimize your JPY spending for maximum benefits</p>
+            <button id="lang-toggle" class="lang-toggle" title="Change Language">
+                <img id="lang-flag" src="flag-kr.png" alt="Language">
+            </button>
+            <h1 data-i18n="title">The More Calculator</h1>
+            <p class="subtitle" data-i18n="subtitle">Optimize your JPY spending for maximum benefits</p>
         </header>
 
         <main>
             <section class="card exchange-section">
-                <h2>Exchange Rate</h2>
+                <h2 data-i18n="exchangeRate">Exchange Rate</h2>
                 <div class="input-group">
-                    <label for="exchange-rate">Send Rate (KRW per 100 JPY, including card fee)</label>
+                    <label for="exchange-rate" data-i18n="sendRateLabel">Send Rate (KRW per 100 JPY, including card
+                        fee)</label>
                     <div class="input-wrapper">
-                        <input type="number" id="exchange-rate" step="0.01" placeholder="Loading...">
+                        <input type="number" id="exchange-rate" step="0.01" data-i18n-placeholder="loading">
                         <span class="unit">KRW</span>
-                        <button id="refresh-rate-btn" class="icon-btn" title="Refresh Rate">
+                        <button id="refresh-rate-btn" class="icon-btn" data-i18n-title="refreshRate">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round">
@@ -39,7 +43,7 @@
                     </div>
                     <p class="help-text" id="rate-source-text">Connecting to local server...</p>
                     <div class="target-display" id="target-jpy-display">
-                        <span class="label">Target (5,999 KRW):</span>
+                        <span class="label" data-i18n="targetLabel">Target (5,999 KRW):</span>
                         <span class="value">-- JPY</span>
                     </div>
                 </div>
@@ -47,8 +51,8 @@
 
             <section class="card product-section">
                 <div class="section-header">
-                    <h2>Items</h2>
-                    <button id="add-product-btn" class="btn secondary">+ Add Item</button>
+                    <h2 data-i18n="items">Items</h2>
+                    <button id="add-product-btn" class="btn secondary" data-i18n="addItem">+ Add Item</button>
                 </div>
                 <div id="product-list">
                     <!-- Product items will be added here dynamically -->
@@ -56,7 +60,7 @@
             </section>
 
             <div class="action-area">
-                <button id="calculate-btn" class="btn primary">Calculate Best Combination</button>
+                <button id="calculate-btn" class="btn primary" data-i18n="calculate">Calculate Best Combination</button>
             </div>
 
             <section id="results-section" class="card results-section hidden">

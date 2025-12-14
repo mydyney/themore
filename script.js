@@ -1,4 +1,218 @@
+// Translation dictionary
+const translations = {
+    ko: {
+        title: "더모아 계산기",
+        subtitle: "JPY 지출을 최적화하여 최대 혜택을 받으세요",
+        exchangeRate: "환율",
+        sendRateLabel: "송금 환율 (100 JPY당 KRW, 카드 수수료 포함)",
+        loading: "로딩 중...",
+        refreshRate: "환율 새로고침",
+        targetLabel: "목표 (5,999 KRW):",
+        items: "상품",
+        addItem: "+ 상품 추가",
+        itemName: "상품명",
+        price: "가격",
+        calculate: "최적 조합 계산",
+        // Dynamic content translations
+        connectingServer: "서버 연결 중...",
+        rateFromTheMore: "TheMore (최종) 환율",
+        clientAt: "클라이언트",
+        serverOffline: "서버 오프라인.",
+        clickToCheck: "신한은행 확인하기",
+        selectJapan: "(일본 100엔 선택)",
+        failedToFetch: "환율을 가져오지 못했습니다. 수동으로 입력해주세요.",
+        // Tax/Discount options
+        tax8Add: "8% 세금 (추가)",
+        tax10Add: "10% 세금 (추가)",
+        tax0Incl: "0% (세금 포함)",
+        discount5: "5% 할인",
+        discount10: "10% 할인",
+        discount20: "20% 할인",
+        discount30: "30% 할인",
+        discount40: "40% 할인",
+        discount50: "50% 할인",
+        // Results
+        optimizationResult: "최적화 결과",
+        noCombinationFound: "5,000 KRW 이상의 조합을 찾을 수 없습니다.",
+        bestOption: "최적 옵션",
+        alternativeOption: "대안 옵션",
+        totalAmount: "총 금액",
+        accumulationRate: "적립률",
+        recommendation: "추천:",
+        addToReach: "x,999 KRW에 도달하기 위해 추가",
+        target: "목표",
+        needs: "필요",
+        recommendationResult: "추천 결과",
+        currentTotal: "현재 총액:",
+        toMakeCombination: "조합 만들기",
+        itemsIncluded: "포함된 상품:",
+        unusedTotal: "미사용 총액:",
+        taxExcluded8: "8% 세전 가격",
+        taxExcluded10: "10% 세전 가격"
+    },
+    en: {
+        title: "The More Calculator",
+        subtitle: "Optimize your JPY spending for maximum benefits",
+        exchangeRate: "Exchange Rate",
+        sendRateLabel: "Send Rate (KRW per 100 JPY, including card fee)",
+        loading: "Loading...",
+        refreshRate: "Refresh Rate",
+        targetLabel: "Target (5,999 KRW):",
+        items: "Items",
+        addItem: "+ Add Item",
+        itemName: "Item Name",
+        price: "Price",
+        calculate: "Calculate Best Combination",
+        // Dynamic content translations
+        connectingServer: "Connecting to local server...",
+        rateFromTheMore: "Rate from TheMore (Final)",
+        clientAt: "Client at",
+        serverOffline: "Server offline.",
+        clickToCheck: "Click to check Shinhan Bank",
+        selectJapan: "(Select 'Japan 100 Yen')",
+        failedToFetch: "Failed to fetch. Please enter manually.",
+        // Tax/Discount options
+        tax8Add: "8% Tax (Add)",
+        tax10Add: "10% Tax (Add)",
+        tax0Incl: "0% (Tax Incl.)",
+        discount5: "5% Discount",
+        discount10: "10% Discount",
+        discount20: "20% Discount",
+        discount30: "30% Discount",
+        discount40: "40% Discount",
+        discount50: "50% Discount",
+        // Results
+        optimizationResult: "Optimization Result",
+        noCombinationFound: "No combination found >= 5,000 KRW.",
+        bestOption: "Best Option",
+        alternativeOption: "Alternative Option",
+        totalAmount: "Total Amount",
+        accumulationRate: "Accumulation Rate",
+        recommendation: "Recommendation:",
+        addToReach: "Add to reach x,999 KRW",
+        target: "Target",
+        needs: "Needs",
+        recommendationResult: "Recommendation Result",
+        currentTotal: "Current Total:",
+        toMakeCombination: "To make a combination",
+        itemsIncluded: "Items included:",
+        unusedTotal: "Unused Total:",
+        taxExcluded8: "8% tax excluded",
+        taxExcluded10: "10% tax excluded"
+    }
+};
+
+// Language management
+let currentLang = 'ko';
+
+function getCurrentLanguage() {
+    const saved = localStorage.getItem('language');
+    if (saved && (saved === 'ko' || saved === 'en')) {
+        return saved;
+    }
+    // Detect browser language
+    const browserLang = navigator.language || navigator.userLanguage;
+    return browserLang.startsWith('ko') ? 'ko' : 'en';
+}
+
+function setLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('language', lang);
+    translatePage();
+    updateFlagIcon();
+}
+
+function translatePage() {
+    const t = translations[currentLang];
+
+    // Translate elements with data-i18n attribute
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) {
+            el.textContent = t[key];
+        }
+    });
+
+    // Translate placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (t[key]) {
+            el.placeholder = t[key];
+        }
+    });
+
+    // Translate titles
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        if (t[key]) {
+            el.title = t[key];
+        }
+    });
+
+    // Update existing product rows
+    document.querySelectorAll('.product-row').forEach((row, index) => {
+        const nameInput = row.querySelector('.product-name');
+        const priceInput = row.querySelector('.product-price');
+        const select = row.querySelector('.discount-select');
+
+        if (nameInput) {
+            const itemNum = index + 1;
+            nameInput.placeholder = `${t.itemName} ${itemNum}`;
+            // Update value only if it matches the old pattern
+            if (nameInput.value.match(/^(Item Name|상품명) \d+$/)) {
+                nameInput.value = `${t.itemName} ${itemNum}`;
+            }
+        }
+
+        if (priceInput) {
+            priceInput.placeholder = t.price;
+        }
+
+        if (select) {
+            const currentValue = select.value;
+            select.innerHTML = `
+                <option value="tax8">${t.tax8Add}</option>
+                <option value="tax10">${t.tax10Add}</option>
+                <option value="0">${t.tax0Incl}</option>
+                <option value="5">${t.discount5}</option>
+                <option value="10">${t.discount10}</option>
+                <option value="20">${t.discount20}</option>
+                <option value="30">${t.discount30}</option>
+                <option value="40">${t.discount40}</option>
+                <option value="50">${t.discount50}</option>
+            `;
+            select.value = currentValue; // Restore selected value
+        }
+    });
+
+    // Update document title
+    document.title = t.title + " - JPY Optimization";
+}
+
+function updateFlagIcon() {
+    const flagImg = document.getElementById('lang-flag');
+    if (flagImg) {
+        flagImg.src = currentLang === 'ko' ? 'flag-us.png' : 'flag-kr.png';
+        flagImg.alt = currentLang === 'ko' ? 'Switch to English' : '한국어로 전환';
+    }
+}
+
+function toggleLanguage() {
+    const newLang = currentLang === 'ko' ? 'en' : 'ko';
+    setLanguage(newLang);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize language
+    currentLang = getCurrentLanguage();
+    setLanguage(currentLang);
+
+    // Set up language toggle button
+    const langToggle = document.getElementById('lang-toggle');
+    if (langToggle) {
+        langToggle.addEventListener('click', toggleLanguage);
+    }
+
     const productList = document.getElementById('product-list');
     const addProductBtn = document.getElementById('add-product-btn');
     const calculateBtn = document.getElementById('calculate-btn');
@@ -151,24 +365,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function addProductRow() {
         productCount++;
+        const t = translations[currentLang];
         const row = document.createElement('div');
         row.className = 'product-row';
         row.innerHTML = `
-            <input type="text" placeholder="Item Name ${productCount}" class="product-name" value="Item ${productCount}">
+            <input type="text" placeholder="${t.itemName} ${productCount}" class="product-name" value="${t.itemName} ${productCount}">
             <div class="input-wrapper">
                 <span class="unit-left">￥</span>
-                <input type="number" placeholder="Price" class="product-price" style="padding-left: 40px;">
+                <input type="number" placeholder="${t.price}" class="product-price" style="padding-left: 40px;">
             </div>
             <select class="discount-select" title="Discount / Tax">
-                <option value="tax8">8% Tax (Add)</option>
-                <option value="tax10">10% Tax (Add)</option>
-                <option value="0" selected>0% (Tax Incl.)</option>
-                <option value="5">5% Discount</option>
-                <option value="10">10% Discount</option>
-                <option value="20">20% Discount</option>
-                <option value="30">30% Discount</option>
-                <option value="40">40% Discount</option>
-                <option value="50">50% Discount</option>
+                <option value="tax8">${t.tax8Add}</option>
+                <option value="tax10">${t.tax10Add}</option>
+                <option value="0" selected>${t.tax0Incl}</option>
+                <option value="5">${t.discount5}</option>
+                <option value="10">${t.discount10}</option>
+                <option value="20">${t.discount20}</option>
+                <option value="30">${t.discount30}</option>
+                <option value="40">${t.discount40}</option>
+                <option value="50">${t.discount50}</option>
             </select>
             <button class="remove-btn" title="Remove">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
