@@ -136,9 +136,9 @@ async function fetchRate() {
 
                     const rawUsdRounded = Number(rawUsd.toFixed(2));
 
-                    // Pure Exchange Rate (No Fees) -> Final Fee 0.95%
+                    // Pure Exchange Rate (No Fees) -> Final Fee 1.3%
                     const baseKrw = Math.floor(rawUsdRounded * usdToKrw);
-                    const finalKrw = Math.floor(baseKrw * 1.0095);
+                    const finalKrw = Math.floor(baseKrw * 1.013);
 
                     latestRateData = {
                         rate: finalKrw,
@@ -146,7 +146,7 @@ async function fetchRate() {
                         source: 'TheMore (Final)',
                         isFinal: true
                     };
-                    console.log(`[${new Date().toISOString()}] Fetched Rate: ${finalKrw} (Raw USD: ${rawUsdRounded}, USD+Visa: ${usdWithVisa}, KRW Base: ${krwBase})`);
+                    console.log(`[${new Date().toISOString()}] Fetched Rate: ${finalKrw} (1.3% Fee Applied)`);
                 }
             }
         }

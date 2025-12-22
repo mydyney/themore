@@ -110,9 +110,8 @@ function getCurrentLanguage() {
     if (saved && (saved === 'ko' || saved === 'en')) {
         return saved;
     }
-    // Detect browser language
-    const browserLang = navigator.language || navigator.userLanguage;
-    return browserLang.startsWith('ko') ? 'ko' : 'en';
+    // Default to Korean
+    return 'ko';
 }
 
 function setLanguage(lang) {
@@ -314,9 +313,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             const rawUsd = 100 * parseFloat(usdToJpy);
                             const rawUsdRounded = Number(rawUsd.toFixed(2));
 
-                            // Pure Exchange Rate (No Fees) -> Final Fee 1.2%
+                            // Pure Exchange Rate (No Fees) -> Final Fee 1.3%
                             const baseKrw = Math.floor(rawUsdRounded * usdToKrw);
-                            const finalKrw = Math.floor(baseKrw * 1.012);
+                            const finalKrw = Math.floor(baseKrw * 1.013);
 
                             rate100 = finalKrw;
                             isRateFinal = true;
@@ -395,10 +394,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (productList.children.length > 3) {
                 row.remove();
             } else {
-                // If 3 or fewer items, just clear the price
+                // If 3 or fewer items, clear name, price and tax/discount
+                const t = translations[currentLang];
+                const nameInput = row.querySelector('.product-name');
                 const priceInput = row.querySelector('.product-price');
+                const select = row.querySelector('.discount-select');
+
+                if (nameInput) {
+                    const index = Array.from(productList.children).indexOf(row) + 1;
+                    nameInput.value = `${t.itemName} ${index}`;
+                }
                 if (priceInput) {
                     priceInput.value = '';
+                }
+                if (select) {
+                    select.value = '0';
                 }
             }
         });
@@ -446,11 +456,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (p.discountValue === 'tax8') {
                 // Add 8% Tax
-                finalPriceJPY = Math.floor(p.priceJPY * 1.08);
+                finalPriceJPY = Math.round(p.priceJPY * 1.08);
                 discountDisplay = "+8% Tax";
             } else if (p.discountValue === 'tax10') {
                 // Add 10% Tax
-                finalPriceJPY = Math.floor(p.priceJPY * 1.10);
+                finalPriceJPY = Math.round(p.priceJPY * 1.10);
                 discountDisplay = "+10% Tax";
             } else if (p.discountValue === '0') {
                 // 0% Discount: No tax calculation, use input price directly
@@ -461,13 +471,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const discountPercent = parseInt(p.discountValue, 10);
 
                 // 1. Convert to pre-tax (8% tax included in price)
-                const basePrice = Math.floor(p.priceJPY / 1.08);
+                // Use ceil to find the minimum base price that results in this tax-included price
+                const basePrice = Math.ceil(p.priceJPY / 1.08);
 
-                // 2. Apply Discount
-                const discountedBase = Math.floor(basePrice * (1 - discountPercent / 100));
+                // 2. Apply Discount (using ceil for discounted base to avoid rounding down too much)
+                const discountedBase = Math.ceil(basePrice * (1 - discountPercent / 100));
 
-                // 3. Re-apply Tax (8%)
-                finalPriceJPY = Math.floor(discountedBase * 1.08);
+                // 3. Re-apply Tax (8%) (using round for final tax-included price)
+                finalPriceJPY = Math.round(discountedBase * 1.08);
 
                 discountDisplay = `-${discountPercent}%`;
             }
@@ -475,14 +486,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // 4. Convert to KRW
             let priceKRW = Math.floor(finalPriceJPY * (rate100 / 100));
 
-            // 5. Correction: Verify reverse calculation matches ORIGINAL input JPY
-            // For discount cases, we want the reverse calculation to match the original input
-            let targetJPY = p.priceJPY; // Use original input JPY
-
-            // For tax-add cases (tax8, tax10), the target should be the final price
-            if (p.discountValue === 'tax8' || p.discountValue === 'tax10') {
-                targetJPY = finalPriceJPY;
-            }
+            // 5. Correction: Verify reverse calculation matches the intended JPY price
+            // The target should always be the final calculated JPY price (discounted or tax-added)
+            let targetJPY = finalPriceJPY;
 
             // Reverse calculate: KRW -> JPY
             let reverseJPY = Math.floor(priceKRW / (rate100 / 100));
@@ -490,7 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // If reverse-calculated JPY doesn't match target JPY, add correction
             while (reverseJPY < targetJPY) {
                 // Calculate 1 JPY in KRW without fee (pure exchange rate)
-                const baseRate = rate100 / 1.012; // Remove the 1.2% fee
+                const baseRate = rate100 / 1.013; // Remove the 1.3% fee
                 const oneJpyInKrw = Math.floor(baseRate / 100);
                 priceKRW += oneJpyInKrw;
                 reverseJPY = Math.floor(priceKRW / (rate100 / 100)); // Re-calculate reverseJPY
@@ -506,6 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Calculate total sum of all items for fallback recommendation
         const totalAllItemsKRW = items.reduce((sum, item) => sum + item.priceKRW, 0);
+        const totalAllItemsJPY = items.reduce((sum, item) => sum + item.finalPriceJPY, 0);
 
         // Find Top 2 Subsets
         const results = findTopSubsets(items);
@@ -519,7 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const unusedItems = items.filter(item => !usedItemsSet.has(item));
         // const unusedSum = unusedItems.reduce((sum, item) => sum + item.priceKRW, 0); // No longer needed here
 
-        displayResults(results, totalAllItemsKRW, unusedItems, items);
+        displayResults(results, totalAllItemsKRW, totalAllItemsJPY, unusedItems, items); // Pass JPY total
     }
 
     // Helper function to determine tax rate from items
@@ -649,7 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
-    function displayResults(results, totalAllItemsKRW = 0, unusedItems = [], allItems = []) {
+    function displayResults(results, totalAllItemsKRW = 0, totalAllItemsJPY = 0, unusedItems = [], allItems = []) {
         resultsSection.classList.remove('hidden');
 
         // Clear previous results
@@ -673,18 +680,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const recHtml = `
                     <div class="recommendation-block" style="margin: 0 20px 20px 20px; padding-top: 16px; border-top: 2px solid var(--border-color);">
                         <h3 style="color: var(--primary-color); margin-bottom: 12px;">Recommendation Result</h3>
-                        <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 12px;">Current Total: <strong>${currentTotalKRW.toLocaleString()} KRW</strong>. Add these amounts to reach x,999 KRW:</p>
+                        <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 12px;">Current Total: <strong>${currentTotalKRW.toLocaleString()} KRW</strong> <span style="color: var(--primary-color); font-weight: 600;">(￥${totalAllItemsJPY.toLocaleString()})</span>. Add these amounts to reach x,999 KRW:</p>
                         <ul style="list-style: none;">
-                            ${recommendations.map(rec => `
+                            ${recommendations.map(rec => {
+                    // Reverse calc: JPY = KRW / (Rate/100)
+                    const targetJPY = Math.round(rec.target / (rate100 / 100));
+                    return `
                                 <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
-                                    <span>Target <strong style="color: #10b981;">${rec.target.toLocaleString()} KRW</strong></span>
+                                    <span>Target <strong style="color: #10b981;">${rec.target.toLocaleString()} KRW</strong> <span style="font-size:0.85em; color:#999;">(≈￥${targetJPY})</span></span>
                                     <div style="text-align: right;">
                                         <span style="display:block; font-weight:bold;">+ ￥${rec.requiredJPY.toFixed(2)}</span>
                                         ${rec.taxLabel ? `<span style="font-size:0.75em; color:#ec4899;">(${rec.taxLabel})</span>` : ''}
                                         <span style="font-size:0.8em; color:#999;">(Needs ${rec.diffKRW.toLocaleString()} KRW)</span>
                                     </div>
                                 </li>
-                            `).join('')}
+                            `}).join('')}
                         </ul>
                     </div>
                 `;
@@ -725,13 +735,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
 
+            const totalJPY = result.items.reduce((sum, item) => sum + item.finalPriceJPY, 0);
+
             const html = `
                 <div class="result-block ${rankClass}" style="margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
                     <h3 style="color: var(--primary-color); margin-bottom: 12px;">${rankLabel}</h3>
                     <div class="result-summary" style="margin-bottom: 12px; padding-bottom: 0; border: none;">
                         <div class="result-item">
                             <span class="label">Total Amount</span>
-                            <span class="value">${result.sum.toLocaleString()} KRW</span>
+                            <span class="value">${result.sum.toLocaleString()} KRW <span style="font-size: 0.9em; color: var(--primary-color); font-weight: 600; margin-left: 6px;">(￥${totalJPY.toLocaleString()})</span></span>
                         </div>
                         <div class="result-item">
                             <span class="label">Accumulation Rate</span>
@@ -781,16 +793,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 12px;">Unused Total: <strong>${currentTotalKRW.toLocaleString()} KRW</strong>. Add these amounts to reach x,999 KRW:</p>
                     <ul style="list-style: none;">
-                        ${recommendations.map(rec => `
+                        ${recommendations.map(rec => {
+                // Calculate JPY for Target KRW roughly for display
+                // Reverse calc: JPY = KRW / (Rate/100)
+                const targetJPY = Math.round(rec.target / (rate100 / 100));
+                return `
                             <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
-                                <span>Target <strong style="color: #10b981;">${rec.target.toLocaleString()} KRW</strong></span>
+                                <span>Target <strong style="color: #10b981;">${rec.target.toLocaleString()} KRW</strong> <span style="font-size:0.85em; color:#999;">(≈￥${targetJPY})</span></span>
                                 <div style="text-align: right;">
                                     <span style="display:block; font-weight:bold;">+ ￥${rec.requiredJPY.toFixed(2)}</span>
                                     ${rec.taxLabel ? `<span style="display:block; font-size:0.75em; color:#ec4899;">(${rec.taxLabel})</span>` : ''}
                                     <span style="font-size:0.8em; color:#999;">(Needs ${rec.diffKRW.toLocaleString()} KRW)</span>
                                 </div>
                             </li>
-                        `).join('')}
+                        `}).join('')}
                     </ul>
                 </div>
             `;
