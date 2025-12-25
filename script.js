@@ -226,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let productCount = 0;
     let isRateFinal = false; // Track if the current rate is final (fetched) or manual
+    let currentBaseRate100 = 0; // The pure exchange rate without fee
 
     // Initialize
     fetchExchangeRate();
@@ -313,10 +314,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             const rawUsd = 100 * parseFloat(usdToJpy);
                             const rawUsdRounded = Number(rawUsd.toFixed(2));
 
-                            // Pure Exchange Rate (No Fees) -> Final Fee 1.3%
+                            // Pure Exchange Rate (No Fees)
                             const baseKrw = Math.floor(rawUsdRounded * usdToKrw);
-                            const finalKrw = Math.floor(baseKrw * 1.013);
+                            // Final Fee 1.2% applied to the base KRW for the 100 JPY rate
+                            const finalKrw = Math.floor(baseKrw * 1.012);
 
+                            currentBaseRate100 = baseKrw;
                             rate100 = finalKrw;
                             isRateFinal = true;
                             const timeStr = new Date().toLocaleTimeString();
@@ -484,22 +487,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 4. Convert to KRW
-            let priceKRW = Math.floor(finalPriceJPY * (rate100 / 100));
+            // User requested: "할인이 및 세금까지 적용 완료 후 최종 합산 금액에 수수료를 추가한 후 환전하는 형태야"
+            // So we add 1.2% fee to JPY, then convert using base rate.
+            const jpyWithFee = Math.floor(finalPriceJPY * 1.012);
+            // If we have a stored base rate, use it, otherwise derive from current input (which has fee)
+            const baseRateUsed = currentBaseRate100 || (parseFloat(exchangeRateInput.value) / 1.012);
+            let priceKRW = Math.floor(jpyWithFee * (baseRateUsed / 100));
 
             // 5. Correction: Verify reverse calculation matches the intended JPY price
             // The target should always be the final calculated JPY price (discounted or tax-added)
             let targetJPY = finalPriceJPY;
 
-            // Reverse calculate: KRW -> JPY
-            let reverseJPY = Math.floor(priceKRW / (rate100 / 100));
+            // Reverse calculate: KRW -> JPY (using rate with fee for consistency with target)
+            const rateWithFeeUsed = parseFloat(exchangeRateInput.value);
+            let reverseJPY = Math.floor(priceKRW / (rateWithFeeUsed / 100));
 
             // If reverse-calculated JPY doesn't match target JPY, add correction
             while (reverseJPY < targetJPY) {
-                // Calculate 1 JPY in KRW without fee (pure exchange rate)
-                const baseRate = rate100 / 1.013; // Remove the 1.3% fee
-                const oneJpyInKrw = Math.floor(baseRate / 100);
+                // Add 1 JPY's worth of KRW
+                const oneJpyInKrw = Math.floor(baseRateUsed / 100);
                 priceKRW += oneJpyInKrw;
-                reverseJPY = Math.floor(priceKRW / (rate100 / 100)); // Re-calculate reverseJPY
+                reverseJPY = Math.floor(priceKRW / (rateWithFeeUsed / 100)); // Re-calculate reverseJPY
             }
 
             return {
