@@ -316,8 +316,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             // Pure Exchange Rate (No Fees)
                             const baseKrw = Math.floor(rawUsdRounded * usdToKrw);
-                            // Final Fee 1.2% applied to the base KRW for the 100 JPY rate
-                            const finalKrw = Math.floor(baseKrw * 1.012);
+                            // Final Fee 1.18% applied to the base KRW for the 100 JPY rate
+                            const finalKrw = Math.floor(baseKrw * 1.0118);
 
                             currentBaseRate100 = baseKrw;
                             rate100 = finalKrw;
