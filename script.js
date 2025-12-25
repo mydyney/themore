@@ -488,10 +488,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 4. Convert to KRW
             // User requested: "할인이 및 세금까지 적용 완료 후 최종 합산 금액에 수수료를 추가한 후 환전하는 형태야"
-            // So we add 1.18% fee to JPY, then convert using base rate.
-            const jpyWithFee = Math.floor(finalPriceJPY * 1.0118);
+            // So we add 1.68% fee to JPY, then convert using base rate.
+            const jpyWithFee = Math.floor(finalPriceJPY * 1.0168);
             // If we have a stored base rate, use it, otherwise derive from current input (which has fee)
-            const baseRateUsed = currentBaseRate100 || (parseFloat(exchangeRateInput.value) / 1.0118);
+            const baseRateUsed = currentBaseRate100 || (parseFloat(exchangeRateInput.value) / 1.0168);
             let priceKRW = Math.floor(jpyWithFee * (baseRateUsed / 100));
 
             // 5. Correction: Verify reverse calculation matches the intended JPY price
