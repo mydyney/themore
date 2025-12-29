@@ -48,7 +48,11 @@ const translations = {
         itemsIncluded: "포함된 상품:",
         unusedTotal: "미사용 총액:",
         taxExcluded8: "8% 세전 가격",
-        taxExcluded10: "10% 세전 가격"
+        taxExcluded10: "10% 세전 가격",
+        manualInput: "수동 입력",
+        manualKrwLabel: "수동 원화",
+        manualJpyLabel: "수동 엔화",
+        manualHelp: "원화와 엔화를 입력하면 오로지 그 비율로만 상품 값을 계산합니다."
     },
     en: {
         title: "The More Calculator",
@@ -98,7 +102,11 @@ const translations = {
         itemsIncluded: "Items included:",
         unusedTotal: "Unused Total:",
         taxExcluded8: "8% tax excluded",
-        taxExcluded10: "10% tax excluded"
+        taxExcluded10: "10% tax excluded",
+        manualInput: "Manual Input",
+        manualKrwLabel: "Manual KRW",
+        manualJpyLabel: "Manual JPY",
+        manualHelp: "Enter KRW and JPY. The calculation will use ONLY this ratio."
     }
 };
 
@@ -224,6 +232,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultRange = document.getElementById('result-range');
     const resultItemsList = document.getElementById('result-items-list');
 
+    // Manual Rate Elements
+    const manualRateToggle = document.getElementById('manual-rate-toggle');
+    const autoRateContainer = document.getElementById('auto-rate-container');
+    const manualRateContainer = document.getElementById('manual-rate-container');
+    const manualKrwInput = document.getElementById('manual-krw');
+    const manualJpyInput = document.getElementById('manual-jpy');
+
+    let isManualMode = false;
+
     let productCount = 0;
     let isRateFinal = false; // Track if the current rate is final (fetched) or manual
     let currentBaseRate100 = 0; // The pure exchange rate without fee
@@ -251,6 +268,17 @@ document.addEventListener('DOMContentLoaded', () => {
     exchangeRateInput.addEventListener('input', () => {
         isRateFinal = false; // Manual input means it's not the final fetched rate
         updateTargetDisplay();
+    });
+
+    manualRateToggle.addEventListener('change', () => {
+        isManualMode = manualRateToggle.checked;
+        if (isManualMode) {
+            autoRateContainer.classList.add('hidden');
+            manualRateContainer.classList.remove('hidden');
+        } else {
+            autoRateContainer.classList.remove('hidden');
+            manualRateContainer.classList.add('hidden');
+        }
     });
 
     function updateTargetDisplay() {
@@ -487,27 +515,35 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 4. Convert to KRW
-            // User requested: "할인이 및 세금까지 적용 완료 후 최종 합산 금액에 수수료를 추가한 후 환전하는 형태야"
-            // So we add 1.68% fee to JPY, then convert using base rate.
-            const jpyWithFee = Math.floor(finalPriceJPY * 1.0168);
-            // If we have a stored base rate, use it, otherwise derive from current input (which has fee)
-            const baseRateUsed = currentBaseRate100 || (parseFloat(exchangeRateInput.value) / 1.0168);
-            let priceKRW = Math.floor(jpyWithFee * (baseRateUsed / 100));
+            let priceKRW;
+            if (isManualMode) {
+                const manualKrw = parseFloat(manualKrwInput.value) || 7448;
+                const manualJpy = parseFloat(manualJpyInput.value) || 800;
+                const manualRate = manualKrw / manualJpy;
+                priceKRW = Math.floor(finalPriceJPY * manualRate);
+            } else {
+                // User requested: "할인이 및 세금까지 적용 완료 후 최종 합산 금액에 수수료를 추가한 후 환전하는 형태야"
+                // So we add 1.68% fee to JPY, then convert using base rate.
+                const jpyWithFee = Math.floor(finalPriceJPY * 1.0168);
+                // If we have a stored base rate, use it, otherwise derive from current input (which has fee)
+                const baseRateUsed = currentBaseRate100 || (parseFloat(exchangeRateInput.value) / 1.0168);
+                priceKRW = Math.floor(jpyWithFee * (baseRateUsed / 100));
 
-            // 5. Correction: Verify reverse calculation matches the intended JPY price
-            // The target should always be the final calculated JPY price (discounted or tax-added)
-            let targetJPY = finalPriceJPY;
+                // 5. Correction: Verify reverse calculation matches the intended JPY price
+                // The target should always be the final calculated JPY price (discounted or tax-added)
+                let targetJPY = finalPriceJPY;
 
-            // Reverse calculate: KRW -> JPY (using rate with fee for consistency with target)
-            const rateWithFeeUsed = parseFloat(exchangeRateInput.value);
-            let reverseJPY = Math.floor(priceKRW / (rateWithFeeUsed / 100));
+                // Reverse calculate: KRW -> JPY (using rate with fee for consistency with target)
+                const rateWithFeeUsed = parseFloat(exchangeRateInput.value);
+                let reverseJPY = Math.floor(priceKRW / (rateWithFeeUsed / 100));
 
-            // If reverse-calculated JPY doesn't match target JPY, add correction
-            while (reverseJPY < targetJPY) {
-                // Add 1 JPY's worth of KRW
-                const oneJpyInKrw = Math.floor(baseRateUsed / 100);
-                priceKRW += oneJpyInKrw;
-                reverseJPY = Math.floor(priceKRW / (rateWithFeeUsed / 100)); // Re-calculate reverseJPY
+                // If reverse-calculated JPY doesn't match target JPY, add correction
+                while (reverseJPY < targetJPY) {
+                    // Add 1 JPY's worth of KRW
+                    const oneJpyInKrw = Math.floor(baseRateUsed / 100);
+                    priceKRW += oneJpyInKrw;
+                    reverseJPY = Math.floor(priceKRW / (rateWithFeeUsed / 100)); // Re-calculate reverseJPY
+                }
             }
 
             return {

@@ -330,8 +330,44 @@ input[type="text"]:focus {
 }
 
 /* Results */
+/* Exchange Rate Section Updates */
+.section-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.manual-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.manual-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.manual-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 480px) {
+    .manual-inputs {
+        grid-template-columns: 1fr;
+    }
+}
+
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .results-section {

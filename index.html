@@ -24,28 +24,58 @@
 
         <main>
             <section class="card exchange-section">
-                <h2 data-i18n="exchangeRate">Exchange Rate</h2>
-                <div class="input-group">
-                    <label for="exchange-rate" data-i18n="sendRateLabel">Send Rate (KRW per 100 JPY, including card
-                        fee)</label>
-                    <div class="input-wrapper">
-                        <input type="number" id="exchange-rate" step="0.01" data-i18n-placeholder="loading">
-                        <span class="unit">KRW</span>
-                        <button id="refresh-rate-btn" class="icon-btn" data-i18n-title="refreshRate">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M23 4v6h-6"></path>
-                                <path d="M1 20v-6h6"></path>
-                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                            </svg>
-                        </button>
+                <div class="section-header-row">
+                    <h2 data-i18n="exchangeRate">Exchange Rate</h2>
+                    <div class="manual-toggle">
+                        <input type="checkbox" id="manual-rate-toggle">
+                        <label for="manual-rate-toggle" data-i18n="manualInput">Manual Input</label>
                     </div>
-                    <p class="help-text" id="rate-source-text">Connecting to local server...</p>
-                    <div class="target-display" id="target-jpy-display">
-                        <span class="label" data-i18n="targetLabel">Target (5,999 KRW):</span>
-                        <span class="value">-- JPY</span>
+                </div>
+
+                <div id="auto-rate-container">
+                    <div class="input-group">
+                        <label for="exchange-rate" data-i18n="sendRateLabel">Send Rate (KRW per 100 JPY, including card
+                            fee)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="exchange-rate" step="0.01" data-i18n-placeholder="loading">
+                            <span class="unit">KRW</span>
+                            <button id="refresh-rate-btn" class="icon-btn" data-i18n-title="refreshRate">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M23 4v6h-6"></path>
+                                    <path d="M1 20v-6h6"></path>
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="help-text" id="rate-source-text">Connecting to local server...</p>
+                        <div class="target-display" id="target-jpy-display">
+                            <span class="label" data-i18n="targetLabel">Target (5,999 KRW):</span>
+                            <span class="value">-- JPY</span>
+                        </div>
                     </div>
+                </div>
+
+                <div id="manual-rate-container" class="hidden">
+                    <div class="manual-inputs">
+                        <div class="input-group">
+                            <label for="manual-krw" data-i18n="manualKrwLabel">Manual KRW</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="manual-krw" placeholder="7448">
+                                <span class="unit">KRW</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="manual-jpy" data-i18n="manualJpyLabel">Manual JPY</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="manual-jpy" placeholder="800">
+                                <span class="unit">JPY</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="help-text" data-i18n="manualHelp">Enter KRW and JPY to calculate custom ratio.</p>
                 </div>
             </section>
 
