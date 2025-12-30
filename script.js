@@ -502,13 +502,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const discountPercent = parseInt(p.discountValue, 10);
 
                 // 1. Convert to pre-tax (8% tax included in price)
-                // Use ceil to find the minimum base price that results in this tax-included price
-                const basePrice = Math.ceil(p.priceJPY / 1.08);
+                const basePrice = p.priceJPY / 1.08;
 
-                // 2. Apply Discount (using ceil for discounted base to avoid rounding down too much)
-                const discountedBase = Math.ceil(basePrice * (1 - discountPercent / 100));
+                // 2. Apply Discount to pre-tax price
+                const discountedBase = basePrice * (1 - discountPercent / 100);
 
-                // 3. Re-apply Tax (8%) (using round for final tax-included price)
+                // 3. Re-apply Tax (8%) and round to nearest integer
                 finalPriceJPY = Math.round(discountedBase * 1.08);
 
                 discountDisplay = `-${discountPercent}%`;
