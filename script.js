@@ -52,7 +52,12 @@ const translations = {
         manualInput: "수동 입력",
         manualKrwLabel: "수동 원화",
         manualJpyLabel: "수동 엔화",
-        manualHelp: "원화와 엔화를 입력하면 오로지 그 비율로만 상품 값을 계산합니다."
+        manualHelp: "원화와 엔화를 입력하면 오로지 그 비율로만 상품 값을 계산합니다.",
+        aboutTitle: "더모아 계산기란?",
+        aboutContent: `
+            <p>더모아 계산기는 일본을 여행하는 신한 '더모아(The More)' 카드 사용자들을 위해 특별히 제작되었습니다. 이 카드는 결제 금액의 1,000원 미만 잔돈(x,999원)을 포인트로 적립해주는 독특한 혜택을 제공합니다. 하지만 해외 결제 시에는 환율 변화, 카드 수수료(일반적으로 1.1% 또는 1.68%), 그리고 일본 현지의 세금(8% 또는 10%) 때문에 정확한 원화 금액을 계산하기가 매우 까다롭습니다.</p>
+            <p>본 계산기는 실시간 환율 정보를 바탕으로 여러 상품을 조합했을 때의 최종 원화 결제 금액을 예측해 줍니다. 5%나 10%의 여행객 할인 혜택은 물론, 포장(8%)이나 매장 내 취식(10%)에 따른 세금 변동까지 모두 고려할 수 있습니다. 일본 여행 중 이 계산기를 활용해 최적의 상품 조합을 찾아 적립 혜택을 극대화해 보세요.</p>
+        `
     },
     en: {
         title: "The More Calculator",
@@ -106,7 +111,12 @@ const translations = {
         manualInput: "Manual Input",
         manualKrwLabel: "Manual KRW",
         manualJpyLabel: "Manual JPY",
-        manualHelp: "Enter KRW and JPY. The calculation will use ONLY this ratio."
+        manualHelp: "Enter KRW and JPY. The calculation will use ONLY this ratio.",
+        aboutTitle: "About The More Calculator",
+        aboutContent: `
+            <p>The More Calculator is a specialized tool designed for travelers visiting Japan who use the Shinhan "The More" card. This card offers a unique benefit of accumulating points for transactions where the KRW amount ends in 999. In international transactions, calculating this exact amount can be challenging due to exchange rates, card fees (typically 1.1% or 1.68%), and local taxes.</p>
+            <p>Our calculator simplifies this process by fetching real-time exchange rates and allowing you to input multiple items. It automatically considers various discount scenarios (like 5% or 10% tourist discounts) and tax additions (8% for food/general goods or 10% for dining in). Use this tool to find the best combination of items to reach that target x,999 KRW amount and maximize your points accumulation during your Japan trip.</p>
+        `
     }
 };
 
@@ -136,7 +146,11 @@ function translatePage() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (t[key]) {
-            el.textContent = t[key];
+            if (t[key].includes('<p>') || t[key].includes('<br>')) {
+                el.innerHTML = t[key];
+            } else {
+                el.textContent = t[key];
+            }
         }
     });
 
@@ -702,6 +716,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayResults(results, totalAllItemsKRW = 0, totalAllItemsJPY = 0, unusedItems = [], allItems = []) {
         resultsSection.classList.remove('hidden');
 
+        // Determine the rate 100 for all calculations in this function
+        let rate100;
+        if (isManualMode) {
+            const manualKrw = parseFloat(manualKrwInput.value) || 7448;
+            const manualJpy = parseFloat(manualJpyInput.value) || 800;
+            rate100 = (manualKrw / manualJpy) * 100;
+        } else {
+            rate100 = parseFloat(exchangeRateInput.value);
+        }
+
         // Clear previous results
         // We need to restructure the HTML to support multiple results if not already
         // The current HTML has a single "result-summary" and "result-details".
@@ -717,7 +741,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Fallback Recommendation for Low Amount
             if (totalAllItemsKRW > 0) {
                 const currentTotalKRW = totalAllItemsKRW;
-                const rate100 = parseFloat(exchangeRateInput.value);
                 const recommendations = generateRecommendations(currentTotalKRW, allItems, rate100);
 
                 const recHtml = `
@@ -757,7 +780,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Skip if the hundreds digit is > 800 (e.g., 5850, 5900)
             if ((result.sum % 1000) <= 800) {
                 const currentTotalKRW = result.sum;
-                const rate100 = parseFloat(exchangeRateInput.value);
                 const recommendations = generateRecommendations(currentTotalKRW, result.items, rate100);
 
                 recHtml = `
@@ -815,7 +837,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (unusedSum > 0) {
             const currentTotalKRW = unusedSum;
-            const rate100 = parseFloat(exchangeRateInput.value);
             const recommendations = generateRecommendations(currentTotalKRW, unusedItems, rate100);
 
             const recHtml = `
