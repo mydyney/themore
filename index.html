@@ -82,14 +82,28 @@
                                 <span class="unit">JPY</span>
                             </div>
                         </div>
+                        <div class="input-group">
+                            <label for="manual-buffer" data-i18n="manualBufferLabel">Safety Buffer</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="manual-buffer" step="0.01" value="0.15">
+                                <span class="unit">%</span>
+                            </div>
+                        </div>
                     </div>
                     <p class="help-text" data-i18n="manualHelp">Enter KRW and JPY to calculate custom ratio.</p>
+                    <p class="help-text" data-i18n="manualBufferHelp">Safety buffer adds a small margin to the rate so predictions stay safely under x,999 even if the card's real rate drifts up.</p>
                 </div>
             </section>
 
             <section class="card product-section">
                 <div class="section-header">
-                    <h2 data-i18n="items">Items</h2>
+                    <div class="section-header-left">
+                        <h2 data-i18n="items">Items</h2>
+                        <button id="clear-all-btn" class="btn-clear-all" data-i18n-title="clearAll" title="Clear All">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            <span data-i18n="clearAll">Clear All</span>
+                        </button>
+                    </div>
                     <button id="add-product-btn" class="btn secondary" data-i18n="addItem">+ Add Item</button>
                 </div>
                 <div id="product-list">

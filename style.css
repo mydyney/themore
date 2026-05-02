@@ -244,6 +244,31 @@ input[type="text"]:focus {
     margin-bottom: 16px;
 }
 
+.section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-clear-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    color: #ef4444;
+    background: transparent;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-clear-all:hover {
+    background-color: #fef2f2;
+    color: #dc2626;
+}
+
 .product-row {
     display: flex;
     gap: 10px;

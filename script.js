@@ -10,6 +10,8 @@ const translations = {
         targetLabel: "목표 (5,999 KRW):",
         items: "상품",
         addItem: "+ 상품 추가",
+        clearAll: "전체 삭제",
+        clearAllConfirm: "모든 상품을 삭제하시겠습니까?",
         itemName: "상품",
         price: "가격",
         calculate: "최적 조합 계산",
@@ -52,7 +54,9 @@ const translations = {
         manualInput: "수동 입력",
         manualKrwLabel: "수동 원화",
         manualJpyLabel: "수동 엔화",
+        manualBufferLabel: "안전 버퍼",
         manualHelp: "원화와 엔화를 입력하면 오로지 그 비율로만 상품 값을 계산합니다.",
+        manualBufferHelp: "안전 버퍼는 환율에 약간의 여유를 더해, 실제 카드사 환율이 살짝 올라도 x,999를 넘지 않도록 보호합니다.",
         aboutTitle: "더모아 계산기란?",
         aboutContent: `
             <p>더모아 계산기는 일본을 여행하는 신한 '더모아(The More)' 카드 사용자들을 위해 특별히 제작되었습니다. 이 카드는 결제 금액의 1,000원 미만 잔돈(x,999원)을 포인트로 적립해주는 독특한 혜택을 제공합니다. 하지만 해외 결제 시에는 환율 변화, 카드 수수료(일반적으로 1.1% 또는 1.68%), 그리고 일본 현지의 세금(8% 또는 10%) 때문에 정확한 원화 금액을 계산하기가 매우 까다롭습니다.</p>
@@ -69,6 +73,8 @@ const translations = {
         targetLabel: "Target (5,999 KRW):",
         items: "Items",
         addItem: "+ Add Item",
+        clearAll: "Clear All",
+        clearAllConfirm: "Remove all items?",
         itemName: "Item",
         price: "Price",
         calculate: "Calculate Best Combination",
@@ -111,7 +117,9 @@ const translations = {
         manualInput: "Manual Input",
         manualKrwLabel: "Manual KRW",
         manualJpyLabel: "Manual JPY",
+        manualBufferLabel: "Safety Buffer",
         manualHelp: "Enter KRW and JPY. The calculation will use ONLY this ratio.",
+        manualBufferHelp: "Safety buffer adds a small margin to the rate so predictions stay safely under x,999 even if the card's real rate drifts up.",
         aboutTitle: "About The More Calculator",
         aboutContent: `
             <p>The More Calculator is a specialized tool designed for travelers visiting Japan who use the Shinhan "The More" card. This card offers a unique benefit of accumulating points for transactions where the KRW amount ends in 999. In international transactions, calculating this exact amount can be challenging due to exchange rates, card fees (typically 1.1% or 1.68%), and local taxes.</p>
@@ -252,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const manualRateContainer = document.getElementById('manual-rate-container');
     const manualKrwInput = document.getElementById('manual-krw');
     const manualJpyInput = document.getElementById('manual-jpy');
+    const manualBufferInput = document.getElementById('manual-buffer');
 
     let isManualMode = false;
 
@@ -271,6 +280,20 @@ document.addEventListener('DOMContentLoaded', () => {
         addProductRow();
     });
 
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', () => {
+            const t = translations[currentLang];
+            if (!confirm(t.clearAllConfirm)) return;
+            productList.innerHTML = '';
+            productCount = 0;
+            addProductRow();
+            addProductRow();
+            addProductRow();
+            resultsSection.classList.add('hidden');
+        });
+    }
+
     calculateBtn.addEventListener('click', () => {
         calculateBestCombination();
     });
@@ -281,6 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     exchangeRateInput.addEventListener('input', () => {
         isRateFinal = false; // Manual input means it's not the final fetched rate
+        currentBaseRate100 = 0; // Invalidate cached base rate so it's re-derived from the new input
         updateTargetDisplay();
     });
 
@@ -532,7 +556,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isManualMode) {
                 const manualKrw = parseFloat(manualKrwInput.value) || 7448;
                 const manualJpy = parseFloat(manualJpyInput.value) || 800;
-                const manualRate = manualKrw / manualJpy;
+                const bufferPct = parseFloat(manualBufferInput.value) || 0;
+                const manualRate = (manualKrw / manualJpy) * (1 + bufferPct / 100);
                 priceKRW = Math.floor(finalPriceJPY * manualRate);
             } else {
                 // User requested: "할인이 및 세금까지 적용 완료 후 최종 합산 금액에 수수료를 추가한 후 환전하는 형태야"
@@ -721,7 +746,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isManualMode) {
             const manualKrw = parseFloat(manualKrwInput.value) || 7448;
             const manualJpy = parseFloat(manualJpyInput.value) || 800;
-            rate100 = (manualKrw / manualJpy) * 100;
+            const bufferPct = parseFloat(manualBufferInput.value) || 0;
+            rate100 = (manualKrw / manualJpy) * (1 + bufferPct / 100) * 100;
         } else {
             rate100 = parseFloat(exchangeRateInput.value);
         }
